@@ -33,6 +33,9 @@ android {
         buildConfigField("String", "BOT_TOKEN", "\"${getLocalProperty("telegram.bot.token", "YOUR_NEW_TOKEN_HERE")}\"")
         buildConfigField("String", "CHAT_ID", "\"${getLocalProperty("telegram.chat.id", "YOUR_CHAT_ID")}\"")
         buildConfigField("String", "FIREBASE_URL", "\"${getLocalProperty("firebase.url", "")}\"")
+        buildConfigField("String", "GITHUB_PAT", "\"${getLocalProperty("github.pat", "")}\"")
+        buildConfigField("String", "GITHUB_USER", "\"${getLocalProperty("github.user", "dthakur-dt")}\"")
+        buildConfigField("String", "GITHUB_REPO", "\"${getLocalProperty("github.repo", "Suto")}\"")
     }
 
     buildTypes {

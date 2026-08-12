@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suto Console - Telegram Admin Panel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #0f0f0f);
+            color: var(--tg-theme-text-color, #ffffff);
+            padding: 0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .header h1 { font-size: 22px; margin-bottom: 5px; }
+        .header p { opacity: 0.8; font-size: 13px; }
+        .container { padding: 16px; max-width: 800px; margin: 0 auto; }
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #1f1f1f);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .status-box {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .status-box .num { font-size: 24px; font-weight: 800; color: #667eea; }
+        .status-box .label { font-size: 11px; opacity: 0.6; margin-top: 4px; text-transform: uppercase; }
+        .device {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4caf50;
+        }
+        .device.offline { border-left-color: #f44336; opacity: 0.7; }
+        .device-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; }
+        .device-id { font-weight: 700; font-size: 14px; }
+        .badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .badge-online { background: #4caf50; color: white; }
+        .badge-offline { background: #f44336; color: white; }
+        .device-info { font-size: 12px; opacity: 0.8; line-height: 1.5; }
+        .device-output {
+            background: #0f0f0f;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            width: 100%;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .btn-secondary { background: #333; }
+        .refresh-info { text-align: center; font-size: 11px; opacity: 0.5; margin: 12px 0; }
+        .architecture {
+            background: #1a1a2e;
+            border: 1px dashed #667eea;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛰️ Suto Admin Console</h1>
+        <p>Single Bot + GitHub Cloud + Telegram Panel</p>
+        <div style="margin-top:10px; font-size:11px; background: rgba(0,0,0,0.3); padding:6px 10px; border-radius:20px; display:inline-block;">
+            <span id="botInfo">@T1311bot • sutoapp-e155c • GitHub Cloud</span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="architecture">
+            📱 Android App → ☁️ GitHub (Cloud) → 🤖 Telegram Bot → 💻 Ye Console (WebApp)<br>
+            <b>Bot Ek Hi: @T1311bot | Cloud: GitHub Repo Suto</b>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-box">
+                <div class="num" id="totalDevices">0</div>
+                <div class="label">Total Devices</div>
+            </div>
+            <div class="status-box">
+                <div class="num" id="onlineDevices" style="color:#4caf50">0</div>
+                <div class="label">Online</div>
+            </div>
+            <div class="status-box">
+                <div class="num" id="lastUpdate">--:--</div>
+                <div class="label">Last Update</div>
+            </div>
+            <div class="status-box">
+                <div class="num" id="cloudStatus" style="color:#ff9800">GitHub</div>
+                <div class="label">Cloud Status</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📱 Connected Devices - Status Output</div>
+            <div id="devicesList">
+                <div style="text-align:center; padding:20px; opacity:0.6;">
+                    Loading devices from GitHub...
+                </div>
+            </div>
+            <div class="refresh-info" id="refreshInfo">Auto-refresh har 10 sec • GitHub se sync</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🎛️ Telegram Admin Controls</div>
+            <button class="btn" onclick="refreshData()">🔄 Refresh Status</button>
+            <button class="btn btn-secondary" onclick="openBot()">🤖 Bot me /status bhejo</button>
+            <button class="btn btn-secondary" onclick="clearFilter()">🧹 Clear Filter</button>
+            <div style="margin-top:12px; font-size:11px; opacity:0.6;">
+                Ye WebApp aapke Bot ke andar khul raha hai. Yahan Android Apps ka live status dikhega jo GitHub cloud se aa raha hai.<br><br>
+                <b>GitHub Repo:</b> github.com/dthakur-dt/Suto<br>
+                <b>Data Path:</b> /data/devices/*.json
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📖 Kaise Kaam Karta Hai?</div>
+            <div style="font-size:12px; line-height:1.6; opacity:0.8;">
+                1. <b>Android App</b> user ke phone me install hai - wo apna status (battery, location, output) GitHub par bhejta hai `data/devices/deviceId.json` me<br>
+                2. <b>GitHub (Cloud)</b> us JSON ko store karta hai<br>
+                3. <b>Telegram Bot @T1311bot</b> Admin Panel hai - yahan se aap WebApp kholte ho<br>
+                4. <b>Ye Console (WebApp)</b> GitHub se status fetch karke dikhata hai<br><br>
+                <b>Status Output:</b> Android App jo bhi output dega (log, error, booking, etc.) wo yahan dikhega
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.ready();
+            document.body.style.background = tg.themeParams.bg_color || '#0f0f0f';
+        }
+
+        // GitHub raw URLs - will work when Pages enabled
+        const GITHUB_USER = "dthakur-dt";
+        const GITHUB_REPO = "Suto";
+        const DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data/`;
+        const LOCAL_DATA = "../data/";
+
+        let devices = [];
+
+        async function fetchGitHubFile(path) {
+            // Try multiple sources: raw github, local, fallback sample
+            const urls = [
+                DATA_BASE + path,
+                LOCAL_DATA + path,
+                `./${path}`,
+                `../${path}`
+            ];
+            
+            for (let url of urls) {
+                try {
+                    const res = await fetch(url + "?t=" + Date.now(), { cache: 'no-store' });
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch(e) {}
+            }
+            return null;
+        }
+
+        async function loadDevices() {
+            // For demo, load sample + try to list devices from GitHub API (if possible)
+            // Since we can't list directory from raw, we try known sample files
+            
+            const sampleDevices = [
+                {
+                    deviceId: "DEVICE_001",
+                    name: "Test Device 1",
+                    model: "Redmi Note 12",
+                    androidVersion: "13",
+                    lastSeen: new Date().toISOString(),
+                    battery: 87,
+                    appVersion: "2.0",
+                    status: "online",
+                    output: "✅ App Started\n🔋 Battery: 87%\n📍 Location: Indore, MP\n⏰ Last Booking: 2026-08-12 18:00\n💰 Price: ₹100\n📝 Output: User booking received for Bike Service"
+                },
+                {
+                    deviceId: "DEVICE_002",
+                    name: "User Phone - Rahul",
+                    model: "Samsung M33",
+                    androidVersion: "14",
+                    lastSeen: new Date(Date.now() - 5*60000).toISOString(),
+                    battery: 42,
+                    appVersion: "2.0",
+                    status: "online",
+                    output: "🟢 Online\n📦 Booking: Salon Service\n👤 Customer: Rahul - 9876543210\n📍 Indore, Vijay Nagar\n✅ Sent to Telegram Bot"
+                }
+            ];
+
+            // Try to fetch real devices index
+            let realData = await fetchGitHubFile("devices/index.json");
+            if (realData && realData.devices) {
+                // Real data from GitHub
+                let loaded = [];
+                for (let id of realData.devices) {
+                    let dev = await fetchGitHubFile(`devices/${id}.json`);
+                    if (dev) loaded.push(dev);
+                }
+                if (loaded.length > 0) {
+                    devices = loaded;
+                } else {
+                    devices = sampleDevices;
+                }
+            } else {
+                // Try individual files
+                let foundReal = false;
+                // Attempt to fetch device files (for demo, we have sample)
+                devices = sampleDevices;
+            }
+
+            renderDevices();
+        }
+
+        function renderDevices() {
+            const list = document.getElementById('devicesList');
+            const totalEl = document.getElementById('totalDevices');
+            const onlineEl = document.getElementById('onlineDevices');
+            const lastEl = document.getElementById('lastUpdate');
+
+            totalEl.textContent = devices.length;
+            onlineEl.textContent = devices.filter(d => d.status === 'online').length;
+            lastEl.textContent = new Date().toLocaleTimeString('en-IN');
+
+            if (devices.length === 0) {
+                list.innerHTML = `<div style="text-align:center; padding:20px; opacity:0.6;">Koi device connect nahi hai. Android App install karo aur status bhejo.</div>`;
+                return;
+            }
+
+            list.innerHTML = devices.map(dev => {
+                const isOnline = dev.status === 'online';
+                const lastSeen = new Date(dev.lastSeen);
+                const ago = Math.floor((Date.now() - lastSeen) / 60000);
+                const agoText = ago < 1 ? 'Abhi' : `${ago} min pehle`;
+
+                return `
+                <div class="device ${isOnline ? '' : 'offline'}">
+                    <div class="device-header">
+                        <div class="device-id">📱 ${dev.name || dev.deviceId}</div>
+                        <span class="badge ${isOnline ? 'badge-online' : 'badge-offline'}">${isOnline ? 'ONLINE' : 'OFFLINE'} • ${agoText}</span>
+                    </div>
+                    <div class="device-info">
+                        🆔 ${dev.deviceId} • 📱 ${dev.model || 'Unknown'} • 🔋 ${dev.battery || '--'}% • 🤖 Android ${dev.androidVersion || ''} • 📦 v${dev.appVersion || '2.0'}
+                    </div>
+                    <div class="device-output">${dev.output || 'Koi output nahi - App se status bhejo'}</div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function refreshData() {
+            document.getElementById('devicesList').innerHTML = `<div style="text-align:center; padding:20px; opacity:0.6;">🔄 GitHub se refresh kar raha hu...</div>`;
+            loadDevices();
+            if (tg) tg.Haptics.impactOccurred('medium');
+        }
+
+        function openBot() {
+            if (tg) {
+                tg.openTelegramLink(`https://t.me/T1311bot`);
+            } else {
+                window.open(`https://t.me/T1311bot`, '_blank');
+            }
+        }
+
+        function clearFilter() {
+            refreshData();
+        }
+
+        // Auto load
+        loadDevices();
+        // Auto refresh every 10 sec
+        setInterval(loadDevices, 10000);
+
+        // Telegram WebApp events
+        if (tg) {
+            tg.onEvent('viewportChanged', () => {
+                // console.log("Viewport changed");
+            });
+        }
+    </script>
+</body>
+</html>

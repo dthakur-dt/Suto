@@ -1,0 +1,11 @@
+{
+  "devices": [
+    "DEVICE_TEST01",
+    "DEVICE_DEMO02"
+  ],
+  "lastUpdated": "2026-08-12 18:30:00",
+  "total": 2,
+  "cloud": "GitHub dthakur-dt/Suto",
+  "bot": "@T1311bot",
+  "console": "https://dthakur-dt.github.io/Suto/"
+}
