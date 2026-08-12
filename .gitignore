@@ -13,6 +13,13 @@ app/build/
 /local.properties
 /keystore.properties
 
-# Sensitive
+# Sensitive - NEVER COMMIT!
 telegram_token.txt
 bot_config.json
+*serviceAccountKey.json
+*firebase-adminsdk*.json
+sutoapp-e155c-*.json
+service-account*.json
+admin-sdk*.json
+.env
+credentials.json
