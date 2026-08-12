@@ -1,0 +1,10 @@
+{
+  "admin": "dthakur-dt",
+  "id": 215295832,
+  "repo": "dthakur-dt/Suto",
+  "classicPAT": "ghp_tgbjQ... Valid - Still works for push",
+  "fineGrainedPAT": "github_pat_11... Valid - User validated - Permissions admin true but push 403 may need Contents RW in token settings",
+  "status": "Both PATs validated, Classic works for push, Fine-grained needs extra perms",
+  "liveCheck": "Pages 200, APK 200 6.6MB, Bot Online, Cloud Live, Build #9 Success",
+  "setAt": "2026-08-12"
+}
