@@ -73,6 +73,29 @@
             <div style="text-align:center; font-size:10px; opacity:.5; margin-top:8px;" id="refreshInfo">Auto-refresh 10s • GitHub Cloud</div>
         </div>
 
+        <div class="card" style="border: 2px solid #667eea;">
+            <div class="card-title">🔨 Build APK - Telegram WebApp se Direct Build</div>
+            <div style="font-size:12px; opacity:0.8; margin-bottom:10px;">
+                Ab Telegram WebApp Console se hi APK build kar sakte ho! Neeche button dabao - GitHub Actions automatically APK build karega.
+            </div>
+            <div style="background:#1a1a1a; border-radius:8px; padding:10px; margin-bottom:10px;">
+                <div style="font-size:11px; margin-bottom:6px;">GitHub PAT (Build ke liye) - Local storage me save hoga, safe hai:</div>
+                <input type="password" id="patInput" placeholder="ghp_... (GitHub PAT - repo scope)" style="width:100%; padding:8px; border-radius:6px; border:1px solid #333; background:#0f0f0f; color:white; font-size:12px; margin-bottom:8px;">
+                <div style="font-size:10px; opacity:0.5;">PAT sirf aapke browser me save hoga, server pe nahi jayega. Testing ke liye jo PAT aapne diya tha wo revoked ho gaya hai, naya banao: GitHub -> Settings -> Developer settings -> Tokens (classic) -> repo scope</div>
+            </div>
+            <div class="remote-grid">
+                <button class="btn" onclick="triggerBuild('debug')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🔨 Build Debug APK</button>
+                <button class="btn btn-sec" onclick="checkBuildStatus()">📊 Check Build Status</button>
+            </div>
+            <button class="btn btn-sec" onclick="openActions()">📦 Open GitHub Actions / Download APK</button>
+            <div id="buildStatus" style="background:#0f0f0f; border-radius:8px; padding:10px; margin-top:10px; font-family:monospace; font-size:11px; min-height:60px; white-space:pre-wrap; border:1px solid #333;">🔨 Build Status: Ready - Press Build Debug APK to start building via GitHub Actions</div>
+            <div style="font-size:10px; opacity:.6; margin-top:8px;">
+                Flow: WebApp Button → GitHub API (workflow_dispatch) → GitHub Actions Builds APK → Artifacts + Release me APK milega<br>
+                Download: Actions page pe jaake Artifacts se APK download karo ya Releases me dekho<br>
+                Build Time: 3-5 minute lagte hain
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-title">🎛️ Remote Control (Telegram se)</div>
             <div class="remote-grid">
@@ -244,6 +267,145 @@
             alert(`Remote Command: ${type} -> ${id}\n\nYe command GitHub data/commands/${id}.json me jayega, Android App poll karke execute karega.\n\nTelegram Bot me bhejo: /${type} ${id}`);
             if(tg) tg.openTelegramLink(`https://t.me/T1311bot`);
         }
+
+        // ============ BUILD APK FROM WEBAPP ============
+        function getStoredPAT(){
+            let pat = localStorage.getItem('github_pat') || document.getElementById('patInput').value.trim();
+            if(pat) localStorage.setItem('github_pat', pat);
+            return pat;
+        }
+
+        function setBuildStatus(msg){
+            document.getElementById('buildStatus').textContent = msg;
+        }
+
+        async function triggerBuild(buildType='debug'){
+            const pat = getStoredPAT();
+            if(!pat || pat.length < 10 || !pat.startsWith('ghp_')){
+                alert('⚠️ Pehle GitHub PAT daalo!\n\nGitHub -> Settings -> Developer settings -> Personal access tokens -> Tokens (classic) -> Generate new token -> repo scope tick karo -> Generate\n\nPAT ko yahan paste karo, wo sirf aapke browser me save hoga');
+                document.getElementById('patInput').focus();
+                setBuildStatus('❌ PAT missing - Pehle GitHub PAT daalo input me');
+                return;
+            }
+
+            setBuildStatus(`🔨 Build Trigger ho raha hai...\nType: ${buildType}\nTime: ${new Date().toLocaleString('en-IN')}\n\nGitHub API call: workflow_dispatch...`);
+
+            try{
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/workflows/build-apk.yml/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${pat}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ref: 'main', inputs: { build_type: buildType } })
+                });
+
+                if(res.status === 204){
+                    setBuildStatus(`✅ Build Trigger Successful!\n\nWorkflow dispatch ho gaya hai GitHub Actions pe.\n\n📊 Ab 3-5 minute me APK build hoga.\n\n1. "Check Build Status" button dabao status dekhne ke liye\n2. Ya "Open GitHub Actions" pe click karo - wahan Artifacts me APK milega\n\nWorkflow: https://github.com/${GITHUB_USER}/${GITHUB_REPO}/actions\n\nLast triggered: ${new Date().toLocaleString('en-IN')}`);
+                    if(tg) tg.Haptics.notificationOccurred('success');
+                    // Auto check status after 10 sec
+                    setTimeout(checkBuildStatus, 10000);
+                } else {
+                    const txt = await res.text();
+                    setBuildStatus(`❌ Build Trigger Failed\nStatus: ${res.status}\nResponse: ${txt}\n\nPossible reasons:\n- PAT me repo + workflow scope nahi hai\n- PAT expired / revoked\n- Workflow file .github/workflows/build-apk.yml missing (push karo)\n\nGitHub Actions page khol ke manual Run workflow bhi kar sakte ho`);
+                }
+            }catch(e){
+                setBuildStatus(`❌ Error: ${e.message}\n\nInternet check karo ya PAT sahi hai ya nahi dekho`);
+            }
+        }
+
+        async function checkBuildStatus(){
+            const pat = getStoredPAT();
+            if(!pat){
+                setBuildStatus('❌ PAT missing - pehle PAT daalo');
+                return;
+            }
+            setBuildStatus('📊 Build Status check kar raha hu...\nGitHub Actions se latest runs fetch...');
+
+            try{
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/runs?per_page=5&event=workflow_dispatch`, {
+                    headers: {
+                        'Authorization': `token ${pat}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if(!res.ok){
+                    const t = await res.text();
+                    setBuildStatus(`❌ Status fetch fail: ${res.status}\n${t}`);
+                    return;
+                }
+                const data = await res.json();
+                const runs = data.workflow_runs || [];
+                if(runs.length === 0){
+                    setBuildStatus('📭 Koi workflow run nahi mila abhi tak. Pehle Build Trigger karo.');
+                    return;
+                }
+
+                let statusText = `📊 Last ${runs.length} Builds:\n\n`;
+                runs.forEach((run, i)=>{
+                    const date = new Date(run.created_at).toLocaleString('en-IN');
+                    statusText += `${i+1}. Run #${run.run_number} - ${run.status} / ${run.conclusion||'running'}\n   ⏰ ${date}\n   🔗 ${run.html_url}\n\n`;
+                });
+
+                const latest = runs[0];
+                statusText += `\nLatest Build:\nID: ${latest.id}\nStatus: ${latest.status}\nConclusion: ${latest.conclusion||'in_progress'}\nURL: ${latest.html_url}\n\n`;
+
+                if(latest.status === 'completed'){
+                    if(latest.conclusion === 'success'){
+                        statusText += `✅ Build Success! APK Artifacts me hai.\n\nDownload ke liye:\n1. GitHub Actions page kholo\n2. Latest run pe click karo\n3. Artifacts section me Suto-APK-xxx.zip milega - download karo\n4. Zip me se APK nikalo aur install karo\n\nDirect Releases: https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases`;
+                    }else{
+                        statusText += `❌ Build Failed: ${latest.conclusion}\nLogs: ${latest.html_url} pe dekho`;
+                    }
+                }else{
+                    statusText += `⏳ Build ${latest.status} me hai... 1-2 min me complete hoga, phir se Check karo.\n\nAuto-refresh in 15 sec...`;
+                    setTimeout(checkBuildStatus, 15000);
+                }
+
+                setBuildStatus(statusText);
+
+                // Also try to fetch artifacts if success
+                if(latest.status === 'completed' && latest.conclusion === 'success'){
+                    try{
+                        const artRes = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/runs/${latest.id}/artifacts`, {
+                            headers: { 'Authorization': `token ${pat}`, 'Accept': 'application/vnd.github.v3+json' }
+                        });
+                        if(artRes.ok){
+                            const artData = await artRes.json();
+                            const arts = artData.artifacts || [];
+                            if(arts.length>0){
+                                statusText += `\n\n📦 Artifacts Found:\n`;
+                                arts.forEach(a=>{
+                                    statusText += `- ${a.name} (${(a.size_in_bytes/1024/1024).toFixed(2)} MB)\n  Expires: ${a.expires_at}\n`;
+                                });
+                                setBuildStatus(statusText);
+                            }
+                        }
+                    }catch(e){}
+                }
+
+            }catch(e){
+                setBuildStatus(`❌ Error checking status: ${e.message}`);
+            }
+        }
+
+        function openActions(){
+            const url = `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/actions`;
+            if(tg){
+                tg.openLink(url);
+            }else{
+                window.open(url, '_blank');
+            }
+        }
+
+        // Load PAT from localStorage on start
+        window.addEventListener('load', ()=>{
+            const saved = localStorage.getItem('github_pat');
+            if(saved){
+                document.getElementById('patInput').value = saved;
+                setBuildStatus(`🔨 Build Ready - PAT saved in browser ✅\n\nPress "Build Debug APK" to trigger GitHub Actions build\n\nLast PAT: ${saved.substring(0,10)}... (local storage me safe hai)\n\nConsole ready: ${new Date().toLocaleString('en-IN')}`);
+            }
+        });
 
         initBatteryChart(); initMap(); loadDevices(); setInterval(loadDevices,15000);
     </script>
