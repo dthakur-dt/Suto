@@ -1,0 +1,12 @@
+{
+  "id": "broadcast_001",
+  "title": "Welcome to Suto v5.0",
+  "message": "🎉 Suto v5.0 me Silent Self-Update + Broadcast + Remote Config add hue hain!\n\nAb Telegram se hi sab control kar sakte ho bina APK rebuild ke!\n\nFeatures:\n✅ Silent Auto-Update\n✅ Broadcast to All Users\n✅ Remote Config\n\nCheck WebApp Console: https://dthakur-dt.github.io/Suto/",
+  "type": "announcement",
+  "priority": "high",
+  "createdAt": "2026-08-12T19:30:00Z",
+  "createdBy": "Telegram Admin",
+  "expiresAt": "2026-08-20T00:00:00Z",
+  "targetDevices": "all",
+  "action": "show_notification"
+}

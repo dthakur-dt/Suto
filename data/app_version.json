@@ -1,0 +1,13 @@
+{
+  "versionCode": 5,
+  "versionName": "5.0-silent-update-broadcast-remoteconfig",
+  "apkUrl": "https://dthakur-dt.github.io/Suto/app-debug.apk",
+  "apkUrlBackup": "https://dthakur-dt.github.io/Suto/apk/app-debug.apk",
+  "releaseNotes": "✅ Silent Self-Update + Broadcast + Remote Config Added\n- Location + Battery + Mobile\n- Battery Graph + Location Map\n- Remote Ring, SOS, Notification Forward\n- WebApp Console: Build Button + Progress Bar + Stable Refresh\n- NEW: Silent Auto-Update, Broadcast to All, Remote Config without rebuild",
+  "mandatory": false,
+  "releasedAt": "2026-08-12T19:30:00Z",
+  "releasedBy": "Telegram Admin via /update_app",
+  "minSdk": 24,
+  "targetSdk": 34,
+  "sizeMB": 6.6
+}

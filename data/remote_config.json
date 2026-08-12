@@ -1,0 +1,42 @@
+{
+  "appName": "Suto - Full Monitoring",
+  "primaryColor": "#667eea",
+  "secondaryColor": "#764ba2",
+  "servicePrice": "₹100",
+  "announcement": "Welcome to Suto v5.0 - Silent Update + Broadcast + Remote Config Enabled!",
+  "bookingEnabled": true,
+  "maintenanceMode": false,
+  "paymentEnabled": true,
+  "features": {
+    "location": true,
+    "battery": true,
+    "mobileNumber": true,
+    "batteryGraph": true,
+    "locationMap": true,
+    "remoteRing": true,
+    "deviceHealth": true,
+    "notificationForward": true,
+    "sosPanic": true,
+    "selfUpdate": true,
+    "broadcast": true,
+    "remoteConfig": true
+  },
+  "ui": {
+    "showBatteryCard": true,
+    "showMobileCard": true,
+    "showLocationCard": true,
+    "showHealthCard": true,
+    "showMap": true,
+    "showGraph": true,
+    "theme": "dark"
+  },
+  "messages": {
+    "welcome": "Welcome to Suto!",
+    "bookingSuccess": "Booking Success! GitHub + Telegram pe bhej diya",
+    "sosAlert": "SOS Alert Sent!",
+    "updateAvailable": "New update available! Downloading silently..."
+  },
+  "lastUpdated": "2026-08-12T19:30:00Z",
+  "lastUpdatedBy": "Telegram Admin via Remote Config",
+  "version": 1
+}

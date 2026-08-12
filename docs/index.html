@@ -134,6 +134,31 @@ Press Build APK - After build, direct download button will appear below!
             </div>
         </div>
 
+        <div class="card" style="border: 2px solid #ff9800;">
+            <div class="card-title">🚀 New Advance Features - Silent Self-Update + Broadcast + Remote Config</div>
+            <div style="font-size:11px; background:#332100; padding:8px; border-radius:6px; margin-bottom:10px; border:1px solid #ff9800;">
+                ✅ Silent Self-Update: Telegram se /update_app bhejoge to sab phones pe app auto-update bina manual install ke!<br>
+                ✅ Broadcast: /broadcast se sab users ko notification ek saath<br>
+                ✅ Remote Config: /set_config se app ka price, message, color bina APK rebuild ke change!
+            </div>
+            <div class="remote-grid">
+                <button class="btn" onclick="sendRemoteCommand('update_app')" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">🚀 Update All Apps</button>
+                <button class="btn" onclick="sendRemoteCommand('broadcast')" style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);">📢 Broadcast</button>
+            </div>
+            <div class="remote-grid" style="margin-top:6px;">
+                <button class="btn" onclick="sendRemoteCommand('set_config_price')" style="background:#333;">💰 Set Price</button>
+                <button class="btn" onclick="sendRemoteCommand('set_config_announce')" style="background:#333;">📢 Set Announcement</button>
+            </div>
+            <div style="font-size:10px; opacity:0.7; margin-top:8px;">
+                Telegram Bot Commands (Admin Only):<br>
+                /update_app [version] [notes] - Silent update all devices<br>
+                /broadcast Message - Send to all Android users<br>
+                /set_config servicePrice ₹250 - Change price without rebuild<br>
+                /set_config announcement Kal band hai - Change announcement
+            </div>
+            <div id="advanceStatus" style="background:#0f0f0f; border-radius:6px; padding:8px; margin-top:8px; font-size:11px; font-family:monospace; min-height:40px; border:1px solid #333;">🚀 Advance Features Ready!<br>Use Telegram Bot to control: @T1311bot - /update_app, /broadcast, /set_config</div>
+        </div>
+
         <div class="card">
             <div class="card-title">🎛️ Remote Control</div>
             <div class="remote-grid">
@@ -417,11 +442,43 @@ Press Build APK - After build, direct download button will appear below!
             if(tg) tg.openTelegramLink(`https://t.me/T1311bot`);
         }
 
+        function sendRemoteCommand(cmd){
+            let text = "";
+            if(cmd === 'update_app'){
+                const ver = prompt("Silent Self-Update - Naya Version Code daalo (e.g., 6):", "6");
+                const notes = prompt("Release Notes (kya naya hai?):", "New features via Telegram silent update");
+                if(ver) text = `/update_app ${ver} ${notes}`;
+            } else if(cmd === 'broadcast'){
+                const msg = prompt("Broadcast Message - Sab Android users ko jayega:", "Diwali Offer 50% OFF! Aaj hi booking karo!");
+                if(msg) text = `/broadcast ${msg}`;
+            } else if(cmd === 'set_config_price'){
+                const price = prompt("Naya Price daalo (e.g., ₹250):", "₹250");
+                if(price) text = `/set_config servicePrice ${price}`;
+            } else if(cmd === 'set_config_announce'){
+                const ann = prompt("Announcement daalo (App me dikhega):", "Kal ham band hai - Happy Diwali!");
+                if(ann) text = `/set_config announcement ${ann}`;
+            }
+            if(text){
+                document.getElementById('advanceStatus').textContent = `🚀 Sending to Telegram Bot: ${text}\n\nBot will update GitHub and all devices will auto-receive within 30 sec...`;
+                if(tg){
+                    tg.openTelegramLink(`https://t.me/T1311bot?text=${encodeURIComponent(text)}`);
+                } else {
+                    // Try to send via clipboard or alert
+                    navigator.clipboard.writeText(text).then(()=>{
+                        alert(`Command copied: ${text}\n\nTelegram me @T1311bot ko paste karo aur send karo!`);
+                        window.open(`https://t.me/T1311bot`, '_blank');
+                    }).catch(()=>{
+                        alert(`Telegram me @T1311bot ko ye command bhejo:\n\n${text}`);
+                        window.open(`https://t.me/T1311bot`, '_blank');
+                    });
+                }
+            }
+        }
+
         function sendApkToTelegram(){
             const apkUrl = 'https://dthakur-dt.github.io/Suto/app-debug.apk';
-            const msg = `📱 *Suto FINAL APK Ready!*\n\n✅ BUILD SUCCESSFUL ✅\nSize: 6.6MB\nVersion: v4.2 Full Features\n\n📥 Direct Download:\n${apkUrl}\n\nFeatures: Location + Battery + Mobile + Health + SOS + Remote Ring + WebApp Console + Build Button + Stable Refresh\n\nInstall: Allow Unknown Sources\n\nConsole: https://dthakur-dt.github.io/Suto/`;
+            const msg = `📱 *Suto FINAL APK Ready!*\n\n✅ BUILD SUCCESSFUL ✅\nSize: 6.6MB\nVersion: v4.2 Full Features + Silent Update + Broadcast + Remote Config\n\n📥 Direct Download:\n${apkUrl}\n\nFeatures: Location + Battery + Mobile + Health + SOS + Remote Ring + WebApp Console + Build Button + Stable Refresh + Silent Update + Broadcast + Remote Config\n\nInstall: Allow Unknown Sources\n\nConsole: https://dthakur-dt.github.io/Suto/`;
             
-            // Try to send via Bot API if PAT available, else open Telegram
             const pat = getStoredPAT();
             if(tg){
                 tg.openTelegramLink(`https://t.me/T1311bot?text=${encodeURIComponent(msg)}`);

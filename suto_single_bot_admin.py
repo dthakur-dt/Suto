@@ -354,8 +354,157 @@ Console: {WEBAPP_URL}
             send_telegram_message(from_chat_id, f"📊 Health for {target} - No data yet")
 
     elif base_cmd == "/sos":
-        # Show SOS history
         send_telegram_message(from_chat_id, f"🆘 *SOS History*\n\nAndroid App me SOS button hai - dabate hi Telegram pe alert aata hai: Battery + Mobile + Location + Maps link\n\nLast SOS: Check data/devices/ me jisme SOS keyword ho\n\nConsole: {WEBAPP_URL} me SOS alerts filter karke dekho")
+
+    # NEW ADVANCE FEATURES: Silent Self-Update + Broadcast + Remote Config
+    elif base_cmd == "/update_app":
+        # /update_app [versionCode] [releaseNotes] - Updates data/app_version.json
+        # Example: /update_app 6 New features added
+        try:
+            new_code = 5
+            notes = "New update via Telegram"
+            if len(parts) >= 2:
+                try:
+                    new_code = int(parts[1])
+                    notes = " ".join(parts[2:]) if len(parts) > 2 else f"Update to version {new_code} via Telegram"
+                except:
+                    notes = " ".join(parts[1:])
+                    # Auto increment version code
+                    content, _ = github_get_file("data/app_version.json")
+                    if content:
+                        data = json.loads(content)
+                        new_code = data.get("versionCode", 5) + 1
+            
+            # Read current version file
+            current_content, _ = github_get_file("data/app_version.json")
+            if current_content:
+                ver_data = json.loads(current_content)
+            else:
+                ver_data = {}
+            
+            ver_data["versionCode"] = new_code
+            ver_data["versionName"] = f"5.{new_code - 5}.0-silent-update"
+            ver_data["releaseNotes"] = notes
+            ver_data["releasedAt"] = str(datetime.now())
+            ver_data["releasedBy"] = f"Telegram Admin {from_chat_id}"
+            ver_data["apkUrl"] = f"https://{GITHUB_USER}.github.io/{GITHUB_REPO}/app-debug.apk"
+            
+            success = github_save_file("data/app_version.json", json.dumps(ver_data, indent=2), f"🚀 Silent Update to v{new_code} via Telegram /update_app")
+            if success:
+                send_telegram_message(from_chat_id, f"🚀 *Silent Self-Update Triggered!*\n\nVersion Code: {new_code}\nVersion Name: {ver_data['versionName']}\nNotes: {notes}\n\n📱 All Android devices will auto-detect and silently download update!\n\nAPK: {ver_data['apkUrl']}\nConsole: {WEBAPP_URL}\n\nDevices poll every 10 min for updates. They will show notification and auto-download.")
+            else:
+                send_telegram_message(from_chat_id, f"❌ Failed to update app_version.json - Need GitHub PAT with write access. Current PAT: {'Set' if GITHUB_PAT else 'Missing (revoked)'}")
+        except Exception as e:
+            send_telegram_message(from_chat_id, f"❌ Update error: {e}\nUsage: /update_app [versionCode] [notes]\nExample: /update_app 6 Added new features")
+
+    elif base_cmd == "/broadcast":
+        # /broadcast Your message here - Broadcast to all Android devices
+        msg_text = " ".join(parts[1:]) if len(parts) > 1 else ""
+        if not msg_text:
+            send_telegram_message(from_chat_id, "Usage: /broadcast Your message\nExample: /broadcast Diwali Offer 50% OFF! Sabhi users ko jayega")
+            return
+        
+        try:
+            broadcast_id = f"broadcast_{int(datetime.now().timestamp())}"
+            broadcast_data = {
+                "id": broadcast_id,
+                "title": "Broadcast from Telegram Admin",
+                "message": msg_text,
+                "type": "announcement",
+                "priority": "high",
+                "createdAt": str(datetime.now()),
+                "createdBy": f"Telegram Admin {from_chat_id}",
+                "expiresAt": "2026-12-31T00:00:00Z",
+                "targetDevices": "all",
+                "action": "show_notification"
+            }
+            
+            # Save broadcast file
+            success = github_save_file(f"data/broadcasts/{broadcast_id}.json", json.dumps(broadcast_data, indent=2), f"📢 Broadcast {broadcast_id} via Telegram")
+            
+            # Update index
+            try:
+                content, sha = github_get_file("data/broadcasts/index.json")
+                if content:
+                    idx_data = json.loads(content)
+                    devices_list = idx_data.get("broadcasts", [])
+                else:
+                    devices_list = []
+                    idx_data = {}
+                if broadcast_id not in devices_list:
+                    devices_list.append(broadcast_id)
+                idx_data["broadcasts"] = devices_list
+                idx_data["lastUpdated"] = str(datetime.now())
+                github_save_file("data/broadcasts/index.json", json.dumps(idx_data, indent=2), f"📋 Update broadcasts index - {broadcast_id}")
+            except:
+                pass
+            
+            if success:
+                send_telegram_message(from_chat_id, f"📢 *Broadcast Sent to All Devices!*\n\nMessage: {msg_text}\nID: {broadcast_id}\n\n📱 All Android Apps will show notification within 30 sec (polling)\n\nConsole: {WEBAPP_URL}\nData: data/broadcasts/{broadcast_id}.json")
+            else:
+                send_telegram_message(from_chat_id, f"📢 Broadcast (local, GitHub PAT missing): {msg_text}\n\nPAT revoked hai, isliye GitHub pe save nahi hua, but Telegram pe broadcast considered. Naya PAT banao write ke liye.")
+        except Exception as e:
+            send_telegram_message(from_chat_id, f"❌ Broadcast error: {e}")
+
+    elif base_cmd == "/set_config":
+        # /set_config key value - Update remote_config.json without APK rebuild
+        # Example: /set_config servicePrice ₹250
+        # Example: /set_config announcement Kal chhuti hai
+        if len(parts) < 3:
+            send_telegram_message(from_chat_id, "Usage: /set_config key value\n\nKeys: appName, servicePrice, announcement, primaryColor, bookingEnabled, maintenanceMode\nExamples:\n/set_config servicePrice ₹250\n/set_config announcement Kal ham band hai\n/set_config bookingEnabled false")
+            return
+        
+        key = parts[1]
+        value = " ".join(parts[2:])
+        
+        # Try to parse boolean
+        if value.lower() in ["true", "false"]:
+            value_parsed = value.lower() == "true"
+        else:
+            value_parsed = value
+        
+        try:
+            content, _ = github_get_file("data/remote_config.json")
+            if content:
+                config = json.loads(content)
+            else:
+                config = {}
+            
+            # Support nested keys like features.bookingEnabled
+            if "." in key:
+                # Handle nested
+                keys = key.split(".")
+                d = config
+                for k in keys[:-1]:
+                    if k not in d:
+                        d[k] = {}
+                    d = d[k]
+                d[keys[-1]] = value_parsed
+            else:
+                # Top level or known keys
+                if key in ["bookingEnabled", "maintenanceMode", "paymentEnabled"]:
+                    config[key] = value_parsed
+                elif key in ["servicePrice", "announcement", "appName", "primaryColor"]:
+                    config[key] = value_parsed
+                else:
+                    # Try to put in appropriate place
+                    if key in config:
+                        config[key] = value_parsed
+                    else:
+                        # Put in messages or features
+                        config[key] = value_parsed
+            
+            config["lastUpdated"] = str(datetime.now())
+            config["lastUpdatedBy"] = f"Telegram Admin {from_chat_id} via /set_config"
+            
+            success = github_save_file("data/remote_config.json", json.dumps(config, indent=2), f"🔄 Remote Config {key}={value} via Telegram")
+            
+            if success:
+                send_telegram_message(from_chat_id, f"🔄 *Remote Config Updated!*\n\nKey: `{key}`\nValue: `{value}`\n\n📱 All Android Apps will apply this without APK rebuild on next open (within 30 sec)!\n\nNo need to build APK - Remote Config is live!\n\nConsole: {WEBAPP_URL}\nFile: data/remote_config.json")
+            else:
+                send_telegram_message(from_chat_id, f"🔄 Remote Config (local): {key}={value}\n\nPAT revoked, so GitHub save failed, but considered. Naya PAT banao.")
+        except Exception as e:
+            send_telegram_message(from_chat_id, f"❌ Config error: {e}")
 
     elif base_cmd.startswith("/help"):
         send_telegram_with_webapp(from_chat_id)
