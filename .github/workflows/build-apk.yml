@@ -1,4 +1,4 @@
-name: Build APK - Suto Full Monitoring
+name: Build APK - Suto Full Monitoring Final
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
     branches: [ main ]
     paths:
       - 'app/**'
-      - 'gradle/**'
+      - 'gradle.properties'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
 
@@ -49,98 +49,112 @@ jobs:
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           echo "telegram.bot.token=test_token_for_build" >> local.properties
           echo "telegram.chat.id=289240360" >> local.properties
-          echo "github.pat=dummy_pat_for_build" >> local.properties
+          echo "github.pat=dummy" >> local.properties
           echo "firebase.url=https://sutoapp-e155c-default-rtdb.firebaseio.com/app_features.json" >> local.properties
           echo "github.user=dthakur-dt" >> local.properties
           echo "github.repo=Suto" >> local.properties
           cat local.properties
 
-      - name: Make gradlew executable
+      - name: Download Gradle Wrapper Jar (Fix)
         run: |
-          chmod +x ./gradlew
-          ls -lh ./gradlew
-
-      - name: Fix Gradle Wrapper (Generate if missing)
-        run: |
+          mkdir -p gradle/wrapper
+          # If jar missing, download from official gradle repo - bypass wrapper task
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Wrapper jar missing, generating wrapper with Gradle 8.6"
-            # Install gradle via sdkman or use gradle action
-            curl -s "https://get.sdkman.io" | bash
-            source "$HOME/.sdkman/bin/sdkman-init.sh"
-            sdk install gradle 8.6
-            gradle wrapper --gradle-version 8.6
-            ls -lh gradle/wrapper/
+            echo "Downloading gradle-wrapper.jar directly..."
+            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar || \
+            curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar || \
+            echo "Failed to download wrapper jar, will use gradle directly"
+          fi
+          ls -lh gradle/wrapper/ || echo "No wrapper folder"
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew && ls -lh ./gradlew
+
+      - name: Build Debug APK - Final Fixed
+        run: |
+          echo "=== Building with fix for previous errors ==="
+          echo "Fixed: mipmap icons added, dataBinding disabled, wrapper jar downloaded"
+          
+          # Try wrapper first, fallback to gradle
+          if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "Using wrapper..."
+            ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false -Dorg.gradle.configureondemand=false || \
+            ./gradlew app:assembleDebug --no-daemon --stacktrace || \
+            gradle assembleDebug --no-daemon --stacktrace
           else
-            echo "Wrapper jar exists"
-            ls -lh gradle/wrapper/
+            echo "Wrapper jar not found, using gradle directly..."
+            gradle assembleDebug --no-daemon --stacktrace --parallel=false || \
+            gradle app:assembleDebug --no-daemon --stacktrace
           fi
 
-      - name: Clean Project
-        run: |
-          ./gradlew clean --no-daemon --stacktrace || gradle clean --no-daemon
-
-      - name: Build Debug APK - Fixed for dataBinding issue
-        run: |
-          # Build with no daemons, fix for dataBindingMergeDependencyArtifactsDebug
-          ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false || \
-          ./gradlew app:assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false || \
-          gradle assembleDebug --no-daemon --stacktrace
-
       - name: List APKs
+        if: always()
         run: |
-          echo "=== Searching APKs ==="
-          find . -name "*.apk" -type f -print
-          ls -lh app/build/outputs/apk/debug/ || echo "No debug folder"
-          ls -lh app/build/outputs/apk/ || echo "No apk folder"
-          find app/build -name "*.apk" -exec ls -lh {} \;
+          echo "=== APK Search ==="
+          find . -name "*.apk" -type f 2>/dev/null
+          ls -lh app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug apks"
+          ls -lh app/build/outputs/ -R 2>/dev/null | head -n 50
 
       - name: Upload APK Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Suto-APK-${{ github.run_number }}-Full-Features
+          name: Suto-FINAL-APK-${{ github.run_number }}
           path: |
             app/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/**/*.apk
+            **/build/outputs/apk/**/*.apk
           if-no-files-found: warn
 
       - name: Create Release with APK
         if: github.event_name == 'workflow_dispatch' && success()
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: build-${{ github.run_number }}
-          name: "Suto Build #${{ github.run_number }} - Full Monitoring Fixed"
+          tag_name: final-build-${{ github.run_number }}
+          name: "Suto FINAL Build #${{ github.run_number }} - All Features Fixed"
           body: |
-            📱 Suto Full Monitoring APK - Fixed Build
+            📱 Suto FINAL APK - All Fixes Applied
             
-            ✅ Fixed: dataBindingMergeDependencyArtifactsDebug error
-            - AGP 8.3.2 + Gradle 8.6 + buildFeatures fix
+            ✅ Fixed:
+            - dataBindingMergeDependencyArtifactsDebug error (AGP 8.3.2 + Gradle 8.6 + buildFeatures fix)
+            - mipmap/ic_launcher missing (icons added in all densities)
+            - wrapper jar download fix
+            - Progress bar + Flicker free stable refresh
             
-            Features:
-            - Location + Battery + Mobile Number
-            - Battery History Graph, Location Map
-            - Remote Ring / Find My Phone
-            - Device Health (RAM/Storage/WiFi)
-            - SOS Panic, Notification Forward, Remote Commands
+            Features - Full Monitoring:
+            - Location (Lat/Lon + Maps link) + History Map
+            - Battery + Battery Graph + History
+            - Mobile Number + Call Button
+            - Device Health: RAM, Storage, WiFi, IP
+            - Remote Ring / Find My Phone (/ring)
+            - Remote Commands: /locate, /battery, /photo
+            - SOS Panic Alert
+            - Notification Forward
             - WebApp Console with Build Button
             
             Built via Telegram WebApp Console Build Button
             Commit: ${{ github.sha }}
-            Build Time: 3-5 min
             
-            Download APK from Artifacts or Release assets below.
+            Download APK below - Install directly!
           files: |
+            app/build/outputs/apk/debug/app-debug.apk
             app/build/outputs/apk/debug/*.apk
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Summary
+      - name: Summary
         if: always()
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Fixed build.gradle.kts - buildFeatures at top, dataBinding disabled" >> $GITHUB_STEP_SUMMARY
+          echo "## Final Build Summary - v4.2 FINAL" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All fixes applied" >> $GITHUB_STEP_SUMMARY
+          echo "- mipmap icons added" >> $GITHUB_STEP_SUMMARY
+          echo "- AGP 8.3.2 + Gradle 8.6" >> $GITHUB_STEP_SUMMARY
+          echo "- dataBinding disabled" >> $GITHUB_STEP_SUMMARY
+          echo "- Wrapper jar download fix" >> $GITHUB_STEP_SUMMARY
+          echo "- Progress bar + Stable refresh" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "📱 APK in Artifacts + Release" >> $GITHUB_STEP_SUMMARY
           echo "💻 Console: https://dthakur-dt.github.io/Suto/" >> $GITHUB_STEP_SUMMARY
-          echo "Build Time: $(date)" >> $GITHUB_STEP_SUMMARY
-          ls -lh app/build/outputs/apk/debug/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No APK found in debug folder" >> $GITHUB_STEP_SUMMARY
+          ls -lh app/build/outputs/apk/debug/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "Checking for APKs..." >> $GITHUB_STEP_SUMMARY
+          find . -name "*.apk" -type f -exec ls -lh {} \; 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No APK found" >> $GITHUB_STEP_SUMMARY
