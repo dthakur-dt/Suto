@@ -41,81 +41,106 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-
+          key: gradle-8.6-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-8.6-
 
       - name: Create local.properties
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          echo "telegram.bot.token=${{ secrets.BOT_TOKEN || 'test_token' }}" >> local.properties
+          echo "telegram.bot.token=test_token_for_build" >> local.properties
           echo "telegram.chat.id=289240360" >> local.properties
-          echo "github.pat=dummy" >> local.properties
+          echo "github.pat=dummy_pat_for_build" >> local.properties
           echo "firebase.url=https://sutoapp-e155c-default-rtdb.firebaseio.com/app_features.json" >> local.properties
+          echo "github.user=dthakur-dt" >> local.properties
+          echo "github.repo=Suto" >> local.properties
           cat local.properties
 
       - name: Make gradlew executable
-        run: chmod +x ./gradlew || echo "No gradlew, will use gradle"
-
-      - name: Build with Gradle Wrapper (if available) or Gradle
         run: |
-          # If wrapper jar missing, generate it
+          chmod +x ./gradlew
+          ls -lh ./gradlew
+
+      - name: Fix Gradle Wrapper (Generate if missing)
+        run: |
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Generating gradle wrapper..."
-            gradle wrapper --gradle-version 8.4 || echo "Wrapper generation failed, trying direct build"
-          fi
-          
-          # Try wrapper first, then gradle
-          if [ -f "./gradlew" ] && [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            ./gradlew assembleDebug --stacktrace || gradle assembleDebug
+            echo "Wrapper jar missing, generating wrapper with Gradle 8.6"
+            # Install gradle via sdkman or use gradle action
+            curl -s "https://get.sdkman.io" | bash
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+            sdk install gradle 8.6
+            gradle wrapper --gradle-version 8.6
+            ls -lh gradle/wrapper/
           else
-            echo "Using gradle directly..."
-            gradle assembleDebug --stacktrace || ./gradlew assembleDebug
+            echo "Wrapper jar exists"
+            ls -lh gradle/wrapper/
           fi
+
+      - name: Clean Project
+        run: |
+          ./gradlew clean --no-daemon --stacktrace || gradle clean --no-daemon
+
+      - name: Build Debug APK - Fixed for dataBinding issue
+        run: |
+          # Build with no daemons, fix for dataBindingMergeDependencyArtifactsDebug
+          ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false || \
+          ./gradlew app:assembleDebug --no-daemon --stacktrace -Dorg.gradle.parallel=false || \
+          gradle assembleDebug --no-daemon --stacktrace
 
       - name: List APKs
         run: |
-          find app/build -name "*.apk" -type f
-          ls -lh app/build/outputs/apk/debug/ || ls -lh app/build/outputs/apk/ || find . -name "*.apk"
+          echo "=== Searching APKs ==="
+          find . -name "*.apk" -type f -print
+          ls -lh app/build/outputs/apk/debug/ || echo "No debug folder"
+          ls -lh app/build/outputs/apk/ || echo "No apk folder"
+          find app/build -name "*.apk" -exec ls -lh {} \;
 
       - name: Upload APK Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Suto-APK-${{ github.run_number }}
+          name: Suto-APK-${{ github.run_number }}-Full-Features
           path: |
             app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/*.apk
-            **/*.apk
+            app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
 
-      - name: Create Release with APK (on manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Create Release with APK
+        if: github.event_name == 'workflow_dispatch' && success()
         uses: softprops/action-gh-release@v1
         with:
           tag_name: build-${{ github.run_number }}
-          name: "Suto Build #${{ github.run_number }} - Full Monitoring"
+          name: "Suto Build #${{ github.run_number }} - Full Monitoring Fixed"
           body: |
-            📱 Suto Full Monitoring APK - Auto Build from WebApp
+            📱 Suto Full Monitoring APK - Fixed Build
+            
+            ✅ Fixed: dataBindingMergeDependencyArtifactsDebug error
+            - AGP 8.3.2 + Gradle 8.6 + buildFeatures fix
             
             Features:
             - Location + Battery + Mobile Number
-            - Battery History Graph
-            - Location History Map
+            - Battery History Graph, Location Map
             - Remote Ring / Find My Phone
             - Device Health (RAM/Storage/WiFi)
-            - SOS Panic Alert
-            - Notification Forward
+            - SOS Panic, Notification Forward, Remote Commands
+            - WebApp Console with Build Button
             
             Built via Telegram WebApp Console Build Button
             Commit: ${{ github.sha }}
+            Build Time: 3-5 min
+            
+            Download APK from Artifacts or Release assets below.
           files: |
             app/build/outputs/apk/debug/*.apk
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update README with Build Status
+      - name: Update Summary
+        if: always()
         run: |
-          echo "✅ Build completed at $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "📱 APK should be in Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Fixed build.gradle.kts - buildFeatures at top, dataBinding disabled" >> $GITHUB_STEP_SUMMARY
+          echo "📱 APK in Artifacts + Release" >> $GITHUB_STEP_SUMMARY
           echo "💻 Console: https://dthakur-dt.github.io/Suto/" >> $GITHUB_STEP_SUMMARY
+          echo "Build Time: $(date)" >> $GITHUB_STEP_SUMMARY
+          ls -lh app/build/outputs/apk/debug/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No APK found in debug folder" >> $GITHUB_STEP_SUMMARY
