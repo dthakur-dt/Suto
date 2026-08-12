@@ -1,0 +1,13 @@
+# IMPORTANT: Is file ko copy karke local.properties banao
+# Kabhi bhi token ko GitHub par mat dalo!
+
+# Isko yahan daalo - apna NAYA token @BotFather se /revoke ke baad
+telegram.bot.token=YOUR_NEW_TOKEN_HERE
+
+# Aapki chat ID
+telegram.chat.id=YOUR_CHAT_ID_HERE
+
+# Android SDK location - Android Studio khud bana dega, example:
+# sdk.dir=/Users/yourname/Library/Android/sdk
+# Windows: sdk.dir=C\:\\Users\\yourname\\AppData\\Local\\Android\\Sdk
+sdk.dir=/home/user/Android/Sdk

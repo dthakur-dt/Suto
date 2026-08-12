@@ -1,0 +1,18 @@
+# NEVER COMMIT TOKENS!
+local.properties
+*.keystore
+*.jks
+
+# Android
+.gradle
+build/
+app/build/
+.idea/
+*.iml
+.DS_Store
+/local.properties
+/keystore.properties
+
+# Sensitive
+telegram_token.txt
+bot_config.json

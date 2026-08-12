@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Telegram Service App - Fixed</string>
+    <string name="hint_name">Aapka Naam</string>
+    <string name="hint_service">Kaunsi Service chahiye?</string>
+    <string name="hint_phone">Phone Number</string>
+    <string name="btn_book">Book Karo aur Telegram pe Bhejo</string>
+    <string name="status_ready">Ready - Token secure hai ✅</string>
+</resources>
