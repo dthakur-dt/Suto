@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:background="#0f0f0f"
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,32 +14,127 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Service Booking + Telegram Bot"
-            android:textSize="22sp"
+            android:text="🛰️ Suto - Full Monitoring"
+            android:textSize="20sp"
             android:textStyle="bold"
+            android:textColor="#ffffff"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvDeviceId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📱 Device ID: Loading..."
+            android:textColor="#aaaaaa"
+            android:textSize="11sp"
             android:layout_marginBottom="8dp"/>
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/status_ready"
-            android:textColor="#2E7D32"
-            android:background="#E8F5E9"
+            android:text="Status Loading..."
+            android:textColor="#ffffff"
+            android:background="#1f1f1f"
             android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="12dp"
+            android:fontFamily="monospace"
+            android:textSize="11sp"/>
+
+        <!-- Location + Battery + Mobile Cards -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvBattery"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:background="#1a1a2e"
+                android:text="🔋 Battery\n--%"
+                android:textColor="#ffffff"
+                android:padding="8dp"
+                android:layout_marginEnd="4dp"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/tvMobile"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:background="#16213e"
+                android:text="📞 Mobile\nLoading..."
+                android:textColor="#ffffff"
+                android:padding="8dp"
+                android:layout_marginStart="4dp"
+                android:gravity="center"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#2a2a2a"
+            android:text="📍 Location: Loading... (Grant permission)"
+            android:textColor="#ffffff"
+            android:padding="10dp"
+            android:layout_marginBottom="8dp"
+            android:textSize="11sp"/>
+
+        <TextView
+            android:id="@+id/tvHealth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1f1f1f"
+            android:text="📊 Device Health Loading..."
+            android:textColor="#cccccc"
+            android:padding="10dp"
+            android:layout_marginBottom="12dp"
+            android:textSize="11sp"
+            android:fontFamily="monospace"/>
+
+        <!-- Booking Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📦 Service Booking (Test)"
+            android:textColor="#ffffff"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="8dp"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_name" />
+                android:hint="Aapka Naam"
+                android:textColor="#ffffff"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Phone Number"
+                android:inputType="phone"
+                android:textColor="#ffffff"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -48,47 +144,56 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPhone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_phone"
-                android:inputType="phone"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etService"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_service" />
+                android:hint="Kaunsi Service?"
+                android:textColor="#ffffff"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBook"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="@string/btn_book"
-            app:cornerRadius="12dp"/>
+            android:layout_height="56dp"
+            android:text="Book Karo (GitHub + Telegram)"
+            app:cornerRadius="10dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- SOS + Remote Features -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSOS"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="🆘 SOS Panic"
+                android:backgroundTint="#d32f2f"
+                app:cornerRadius="10dp"
+                android:layout_marginEnd="4dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefreshAll"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="🔄 Refresh All"
+                android:backgroundTint="#333333"
+                app:cornerRadius="10dp"
+                android:layout_marginStart="4dp"/>
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="🔧 Purane Build ki Fix Guide:
-            
-1. Android Studio me File -> Invalidate Caches / Restart
-2. Build -> Clean Project
-3. local.properties me apna NAYA token dalo (purana leak ho gaya hai)
-4. ./gradlew assembleDebug se naya APK banao
-5. Phone se purana app uninstall karke naya install karo
-
-⚠️ Token ko kabhi GitHub par mat dalo! .gitignore me local.properties already blocked hai."
-            android:textSize="13sp"/>
+            android:text="Long press status text = Force refresh + Location\n\nFeatures Added: ✅ Battery Graph ✅ Location History Map ✅ Remote Ring (/ring) ✅ Device Health (RAM/Storage/WiFi) ✅ Notification Forward ✅ SOS Panic ✅ Remote Commands (/locate) ✅ Mobile + Location + Battery\n\nGitHub PAT revoked hai - naya banao production ke liye\nTesting Token: 8670... (badalna hai)\nConsole: dthakur-dt.github.io/Suto/"
+            android:textColor="#888888"
+            android:textSize="10sp"
+            android:layout_marginTop="16dp"/>
 
     </LinearLayout>
 </ScrollView>

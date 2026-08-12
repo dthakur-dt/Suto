@@ -1,0 +1,8 @@
+{
+  "id": "test-cmd-001",
+  "type": "ring",
+  "payload": "Test ring command",
+  "timestamp": 1786558600000,
+  "executed": false,
+  "from": "Telegram Admin Bot Full Features"
+}
