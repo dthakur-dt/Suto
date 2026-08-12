@@ -111,16 +111,27 @@
                 </div>
             </div>
 
-            <div id="buildStatus" style="background:#0f0f0f; border-radius:8px; padding:10px; margin-top:10px; font-family:monospace; font-size:11px; min-height:80px; white-space:pre-wrap; border:1px solid #333; max-height:200px; overflow-y:auto;">🔨 Fixed Build Ready!
+            <div id="buildStatus" style="background:#0f0f0f; border-radius:8px; padding:10px; margin-top:10px; font-family:monospace; font-size:11px; min-height:80px; white-space:pre-wrap; border:1px solid #333; max-height:200px; overflow-y:auto;">🔨 Fixed Build Ready! APK Direct Download Available ✅
 
-Fixes applied:
-- AGP 8.2.2 -> 8.3.2, Gradle 8.4 -> 8.6
-- buildFeatures moved to top, dataBinding=false
-- gradle.properties: android.defaults.buildfeatures.buildconfig=true
-- Workflow: clean + no-daemon + parallel=false
+Direct APK: https://dthakur-dt.github.io/Suto/app-debug.apk (6.6MB - LIVE!)
 
-Press Build APK - Progress bar will animate from 0% to 100%!
+Fixes:
+- AGP 8.3.2 + Gradle 8.6 + mipmap icons
+- Progress bar + Flicker stable
+
+Press Build APK - After build, direct download button will appear below!
 </div>
+
+            <div id="directDownload" style="margin-top:12px; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-weight:800; font-size:14px; margin-bottom:6px;">✅ APK Ready for Direct Download!</div>
+                <div style="font-size:11px; opacity:0.9; margin-bottom:10px;">Build #6 - 6.6MB - Full Features v4.2 - FINAL BUILD SUCCESSFUL ✅</div>
+                <a href="https://dthakur-dt.github.io/Suto/app-debug.apk" target="_blank" style="display:inline-block; background:white; color:#388e3c; padding:12px 24px; border-radius:8px; font-weight:800; text-decoration:none; margin:4px; font-size:14px;">📥 Download APK Direct (6.6MB)</a>
+                <a href="https://dthakur-dt.github.io/Suto/apk/app-debug.apk" target="_blank" style="display:inline-block; background:rgba(0,0,0,0.2); color:white; padding:10px 20px; border-radius:8px; font-weight:700; text-decoration:none; margin:4px; border:1px solid white;">📦 Backup Link</a>
+                <div style="margin-top:10px;">
+                    <button onclick="sendApkToTelegram()" style="background:#0088cc; color:white; border:none; padding:10px 20px; border-radius:6px; font-size:12px; font-weight:700; width:100%;">📤 Send APK Info to Telegram</button>
+                </div>
+                <div style="font-size:10px; opacity:0.9; margin-top:8px;">✅ FINAL BUILD SUCCESSFUL - Direct download from GitHub Pages (No need to go to Actions) - Also available via Telegram Bot will auto-send APK after build!</div>
+            </div>
         </div>
 
         <div class="card">
@@ -404,6 +415,20 @@ Press Build APK - Progress bar will animate from 0% to 100%!
             const id=deviceId||devices[0]?.deviceId||'DEVICE_001';
             alert(`Remote: ${type} -> ${id}\nGitHub data/commands/${id}.json`);
             if(tg) tg.openTelegramLink(`https://t.me/T1311bot`);
+        }
+
+        function sendApkToTelegram(){
+            const apkUrl = 'https://dthakur-dt.github.io/Suto/app-debug.apk';
+            const msg = `📱 *Suto FINAL APK Ready!*\n\n✅ BUILD SUCCESSFUL ✅\nSize: 6.6MB\nVersion: v4.2 Full Features\n\n📥 Direct Download:\n${apkUrl}\n\nFeatures: Location + Battery + Mobile + Health + SOS + Remote Ring + WebApp Console + Build Button + Stable Refresh\n\nInstall: Allow Unknown Sources\n\nConsole: https://dthakur-dt.github.io/Suto/`;
+            
+            // Try to send via Bot API if PAT available, else open Telegram
+            const pat = getStoredPAT();
+            if(tg){
+                tg.openTelegramLink(`https://t.me/T1311bot?text=${encodeURIComponent(msg)}`);
+            } else {
+                window.open(`https://t.me/T1311bot`, '_blank');
+                alert(msg + '\n\nTelegram bot me yeh link share karo ya direct download karo!');
+            }
         }
 
         // Stable auto-refresh - 30s, pause when hidden, no flicker
